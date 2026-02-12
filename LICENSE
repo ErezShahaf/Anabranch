@@ -1,0 +1,29 @@
+LICENSE AGREEMENT
+
+Licensor: Erez Shahaf
+Software: Anabranch
+License: Polyform Shield License 1.0.0 (Customized)
+
+1. ACCEPTANCE
+By downloading, using, or copying this Software, you agree to these terms.
+
+2. GRANT OF LICENSE
+Subject to the restrictions in Section 3, the Licensor grants you a non-exclusive, worldwide, royalty-free license to use, copy, modify, and distribute the Software for:
+   (a) Personal use;
+   (b) Internal business use (e.g., using Anabranch to manage your company's own workflows);
+   (c) Non-commercial projects.
+
+3. RESTRICTIONS (THE "ANTI-COMPETITION" CLAUSE)
+You may NOT use the Software to create, provide, or support a "Competing Service." A Competing Service is defined as any product or service where you:
+   (a) Make the functionality of the Software available to third parties as a managed or hosted service, regardless of whether a fee is charged;
+   (b) Embed, wrap, or integrate the Software’s core logic into a third-party platform, application, or AI assistant;
+   (c) Market a product as a direct substitute for the official offerings of the Licensor.
+
+4. ATTRIBUTION
+If you distribute the Software (or modified versions), you must retain this License file and the copyright notices.
+
+5. DISCLAIMER OF WARRANTY (THE "AS-IS" CLAUSE)
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+6. LIMITATION OF LIABILITY
+In no event shall Erez Shahaf be liable for any special, incidental, indirect, or consequential damages whatsoever arising out of the use of or inability to use the Software.
