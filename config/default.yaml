@@ -1,0 +1,53 @@
+server:
+  port: 3000
+  host: 0.0.0.0
+
+orchestrator:
+  # Orchestrator implementation to use
+  provider: default
+
+agent:
+  # Exactly one: "claude-code" or "cursor"
+  provider: claude-code
+  assessment:
+    # Minimum confidence score (0-100) for the AI to proceed autonomously
+    confidenceThreshold: 80
+    # Maximum task scope the AI is allowed to handle
+    # Options: trivial, small, medium, large, architectural
+    maxScope: small
+  execution:
+    maxFileChanges: 20
+    timeoutMinutes: 30
+    # How many times to retry if the agent fails or tests don't pass
+    retries: 3
+
+ticketing:
+  jira:
+    enabled: true
+    webhookSecret: ${JIRA_WEBHOOK_SECRET}
+    filters:
+      # Only process tickets from these Jira projects (empty = all)
+      projects: []
+      # Only process tickets that have ALL of these labels (empty = no label requirement)
+      labels: []
+      # Skip tickets that have ANY of these labels
+      excludeLabels: []
+      # Only process these issue types (empty = all types)
+      issueTypes: []
+      # Only process tickets assigned to these users (empty = all assignees)
+      assignees: []
+
+sourceControl:
+  github:
+    appId: ${GITHUB_APP_ID}
+    privateKeyPath: /secrets/github-app-private-key.pem
+    installationId: ${GITHUB_APP_INSTALLATION_ID}
+    # Default base branch for pull requests (repos can override via their own default branch)
+    baseBranch: main
+
+workspace:
+  basePath: /data/workspaces
+
+logging:
+  level: info
+  format: pretty

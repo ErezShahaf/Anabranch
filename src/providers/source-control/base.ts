@@ -1,0 +1,29 @@
+import type {
+  Repository,
+  CreatePullRequestParameters,
+  PullRequest,
+} from "../../core/types.js";
+
+export abstract class SourceControlProvider {
+  abstract readonly name: string;
+
+  abstract listRepositories(): Promise<Repository[]>;
+
+  abstract cloneRepository(
+    repository: Repository,
+    targetPath: string
+  ): Promise<void>;
+
+  abstract pullLatest(repositoryPath: string): Promise<void>;
+
+  abstract pushBranch(
+    repositoryPath: string,
+    branchName: string
+  ): Promise<void>;
+
+  abstract createPullRequest(
+    parameters: CreatePullRequestParameters
+  ): Promise<PullRequest>;
+
+  abstract getAuthenticatedCloneUrl(repository: Repository): Promise<string>;
+}

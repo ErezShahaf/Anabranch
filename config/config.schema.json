@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["server", "orchestrator", "agent", "ticketing", "sourceControl", "workspace", "logging"],
+  "properties": {
+    "server": {
+      "type": "object",
+      "required": ["port", "host"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "host": { "type": "string" }
+      }
+    },
+    "orchestrator": {
+      "type": "object",
+      "required": ["provider"],
+      "properties": {
+        "provider": { "type": "string", "enum": ["default"] }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "required": ["provider", "assessment", "execution"],
+      "properties": {
+        "provider": { "type": "string", "enum": ["claude-code", "cursor"] },
+        "assessment": {
+          "type": "object",
+          "required": ["confidenceThreshold", "maxScope"],
+          "properties": {
+            "confidenceThreshold": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "maxScope": { "type": "string", "enum": ["trivial", "small", "medium", "large", "architectural"] }
+          }
+        },
+        "execution": {
+          "type": "object",
+          "required": ["maxFileChanges", "timeoutMinutes", "retries"],
+          "properties": {
+            "maxFileChanges": { "type": "integer", "minimum": 1 },
+            "timeoutMinutes": { "type": "integer", "minimum": 1 },
+            "retries": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "ticketing": {
+      "type": "object",
+      "required": ["jira"],
+      "properties": {
+        "jira": {
+          "type": "object",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "webhookSecret": { "type": "string" },
+            "filters": {
+              "type": "object",
+              "properties": {
+                "projects": { "type": "array", "items": { "type": "string" } },
+                "labels": { "type": "array", "items": { "type": "string" } },
+                "excludeLabels": { "type": "array", "items": { "type": "string" } },
+                "issueTypes": { "type": "array", "items": { "type": "string" } },
+                "assignees": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sourceControl": {
+      "type": "object",
+      "required": ["github"],
+      "properties": {
+        "github": {
+          "type": "object",
+          "required": ["appId", "privateKeyPath", "installationId", "baseBranch"],
+          "properties": {
+            "appId": { "type": "string" },
+            "privateKeyPath": { "type": "string" },
+            "installationId": { "type": "string" },
+            "baseBranch": { "type": "string" }
+          }
+        }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["basePath"],
+      "properties": {
+        "basePath": { "type": "string" }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "required": ["level", "format"],
+      "properties": {
+        "level": { "type": "string", "enum": ["trace", "debug", "info", "warn", "error", "fatal"] },
+        "format": { "type": "string", "enum": ["json", "pretty"] }
+      }
+    }
+  }
+}
