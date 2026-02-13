@@ -4,7 +4,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { Injectable, type OnModuleInit } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
-import type { Repository } from "../core/types.js";
+import type { Repository } from "../providers/source-control/types.js";
 import { SourceControlProvider } from "../providers/source-control/base.js";
 import { ConfigurationService } from "../core/configuration/configuration.service.js";
 

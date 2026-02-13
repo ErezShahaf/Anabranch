@@ -1,4 +1,5 @@
-import type { Ticket, Repository } from "../../../core/types.js";
+import type { Ticket } from "../../ticketing/types.js";
+import type { Repository } from "../../source-control/types.js";
 
 export function buildAssessmentPrompt(
   ticket: Ticket,

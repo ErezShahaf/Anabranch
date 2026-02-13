@@ -17,7 +17,7 @@ export class TaskProcessorService implements OnModuleInit {
   }
 
   onModuleInit(): void {
-    this.taskQueue.onEnqueued(() => this.processNext());
+    this.taskQueue.registerOnEnqueuedCallback(() => this.processNext());
     this.logger.info(
       { orchestrator: this.orchestrator.name },
       "task processor started, listening for tasks",

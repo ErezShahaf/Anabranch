@@ -4,12 +4,12 @@ import { promisify } from "node:util";
 import { Octokit } from "@octokit/rest";
 import { createAppAuth } from "@octokit/auth-app";
 import type pino from "pino";
+import type { GitHubSourceControlConfiguration } from "../../../core/configuration/types.js";
 import type {
-  GitHubSourceControlConfiguration,
   Repository,
   CreatePullRequestParameters,
   PullRequest,
-} from "../../../core/types.js";
+} from "../types.js";
 import { SourceControlProvider } from "../base.js";
 
 const execFileAsync = promisify(execFile);

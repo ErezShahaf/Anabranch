@@ -1,52 +1,31 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type pino from "pino";
-import type {
-  Ticket,
-  AssessmentResult,
-  AgentResult,
-  AgentConfiguration,
-  Repository,
-} from "../../../core/types.js";
+import type { Ticket } from "../../ticketing/types.js";
+import type { AssessmentResult } from "../../../core/orchestrator/types.js";
+import type { AgentResult } from "../types.js";
+import type { AgentConfiguration } from "../../../core/configuration/types.js";
+import type { Repository } from "../../source-control/types.js";
 import { CodingAgent } from "../base.js";
 import { buildAssessmentPrompt } from "../prompts/assessment.js";
 import { buildExecutionPrompt } from "../prompts/execution.js";
-
-const ASSESSMENT_JSON_SCHEMA = {
-  type: "object" as const,
-  properties: {
-    confidence: { type: "number" as const },
-    scope: {
-      type: "string" as const,
-      enum: ["trivial", "small", "medium", "large", "architectural"],
-    },
-    riskFactors: { type: "array" as const, items: { type: "string" as const } },
-    decisionsRequired: { type: "array" as const, items: { type: "string" as const } },
-    estimatedFiles: { type: "number" as const },
-    affectedRepositories: { type: "array" as const, items: { type: "string" as const } },
-    reasoning: { type: "string" as const },
-  },
-  required: [
-    "confidence",
-    "scope",
-    "riskFactors",
-    "decisionsRequired",
-    "estimatedFiles",
-    "affectedRepositories",
-    "reasoning",
-  ],
-};
+import { DEFAULT_ASSESSMENT_OPTIONS } from "./default-assessment-options.js";
+import { DEFAULT_EXECUTION_OPTIONS } from "./default-execution-options.js";
+import type { AnthropicService } from "./anthropic.service.js";
+import { validateAssessmentResult } from "../../../core/orchestrator/assessment-result.schema.js";
 
 export class ClaudeCodeAgent extends CodingAgent {
   readonly name = "claude-code";
+  private readonly anthropicService: AnthropicService;
   private readonly logger: pino.Logger;
 
-  constructor(logger: pino.Logger) {
+  constructor(anthropicService: AnthropicService, logger: pino.Logger) {
     super();
+    this.anthropicService = anthropicService;
     this.logger = logger.child({ component: "claude-code-agent" });
   }
 
-  async isAvailable(): Promise<boolean> {
-    return !!process.env["ANTHROPIC_API_KEY"];
+  async healthCheck(): Promise<boolean> {
+    return this.anthropicService.healthCheck();
   }
 
   async assess(
@@ -62,23 +41,10 @@ export class ClaudeCodeAgent extends CodingAgent {
 
     const result = query({
       prompt,
-      options: {
-        permissionMode: "plan",
-        tools: ["Read", "Glob", "Grep"],
-        systemPrompt: {
-          type: "preset",
-          preset: "claude_code",
-          append: "You are assessing a ticket for autonomous implementation. Do not make any changes.",
-        },
-        outputFormat: {
-          type: "json_schema",
-          schema: ASSESSMENT_JSON_SCHEMA,
-        },
-        maxTurns: 20,
-      },
+      options: DEFAULT_ASSESSMENT_OPTIONS,
     });
 
-    let assessmentData: AssessmentResult | null = null;
+    let rawAssessment: unknown = null;
     let totalCost = 0;
 
     for await (const message of result) {
@@ -86,9 +52,9 @@ export class ClaudeCodeAgent extends CodingAgent {
         totalCost = message.total_cost_usd;
 
         if (message.structured_output) {
-          assessmentData = message.structured_output as AssessmentResult;
+          rawAssessment = message.structured_output;
         } else {
-          assessmentData = this.parseAssessmentFromText(message.result);
+          rawAssessment = this.parseAssessmentFromText(message.result);
         }
       }
 
@@ -98,9 +64,11 @@ export class ClaudeCodeAgent extends CodingAgent {
       }
     }
 
-    if (!assessmentData) {
+    if (rawAssessment === null) {
       throw new Error("Claude Code returned no assessment result");
     }
+
+    const assessmentData = validateAssessmentResult(rawAssessment);
 
     this.logger.info(
       {
@@ -131,22 +99,12 @@ export class ClaudeCodeAgent extends CodingAgent {
       "running execution with Claude Code"
     );
 
-    const primaryWorkDirectory = workDirectories[0] ?? process.cwd();
 
     const result = query({
       prompt,
       options: {
-        cwd: primaryWorkDirectory,
-        additionalDirectories: workDirectories.slice(1),
-        permissionMode: "bypassPermissions",
-        allowDangerouslySkipPermissions: true,
-        tools: { type: "preset", preset: "claude_code" },
-        systemPrompt: {
-          type: "preset",
-          preset: "claude_code",
-        },
-        maxTurns: 50,
-        maxBudgetUsd: 5,
+        ...DEFAULT_EXECUTION_OPTIONS,
+        additionalDirectories: workDirectories,
       },
     });
 
@@ -186,12 +144,12 @@ export class ClaudeCodeAgent extends CodingAgent {
     };
   }
 
-  private parseAssessmentFromText(text: string): AssessmentResult {
+  private parseAssessmentFromText(text: string): unknown {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Could not find JSON in Claude Code assessment response");
     }
 
-    return JSON.parse(jsonMatch[0]) as AssessmentResult;
+    return JSON.parse(jsonMatch[0]) as unknown;
   }
 }

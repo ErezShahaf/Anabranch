@@ -1,11 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
-import type {
-  TicketTask,
-  AssessmentResult,
-  TaskScope,
-  Repository,
-} from "../types.js";
+import type { TicketTask } from "../queue/types.js";
+import type { AssessmentResult, TaskScope } from "./types.js";
+import type { Repository } from "../../providers/source-control/types.js";
 import { CodingAgent } from "../../providers/agents/base.js";
 import { SourceControlProvider } from "../../providers/source-control/base.js";
 import { ConfigurationService } from "../configuration/configuration.service.js";

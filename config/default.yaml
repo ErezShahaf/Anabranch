@@ -9,6 +9,7 @@ orchestrator:
 agent:
   # Exactly one: "claude-code" or "cursor"
   provider: claude-code
+  apiKey: ${AGENT_API_KEY}
   assessment:
     # Minimum confidence score (0-100) for the AI to proceed autonomously
     confidenceThreshold: 80

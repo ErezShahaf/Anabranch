@@ -1,4 +1,5 @@
-import type { Ticket, AssessmentResult } from "../../../core/types.js";
+import type { Ticket } from "../../ticketing/types.js";
+import type { AssessmentResult } from "../../../core/orchestrator/types.js";
 
 export function buildExecutionPrompt(
   ticket: Ticket,

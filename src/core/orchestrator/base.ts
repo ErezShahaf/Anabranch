@@ -1,4 +1,4 @@
-import type { TicketTask } from "../types.js";
+import type { TicketTask } from "../queue/types.js";
 
 export abstract class TaskOrchestrator {
   abstract readonly name: string;

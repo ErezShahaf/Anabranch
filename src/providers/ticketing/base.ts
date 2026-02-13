@@ -1,4 +1,4 @@
-import type { TicketEvent, Ticket } from "../../core/types.js";
+import type { TicketEvent, Ticket } from "./types.js";
 
 export abstract class TicketProvider {
   abstract readonly name: string;

@@ -5,7 +5,7 @@ import type {
   Ticket,
   TicketEvent,
   TicketFilterConfiguration,
-} from "../../../core/types.js";
+} from "../types.js";
 import type { TaskQueue } from "../../../core/queue/task-queue.js";
 import { TASK_QUEUE } from "../../../core/queue/tokens.js";
 import { TicketProvider } from "../base.js";

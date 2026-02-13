@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
-import type { AssessedTicketTask, Repository, PullRequest } from "../types.js";
+import type { AssessedTicketTask } from "../queue/types.js";
+import type { Repository, PullRequest } from "../../providers/source-control/types.js";
 import { SourceControlProvider } from "../../providers/source-control/base.js";
 import { WorkspaceManager } from "../../workspace/manager.js";
 

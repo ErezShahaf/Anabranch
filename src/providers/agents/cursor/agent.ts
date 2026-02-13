@@ -1,15 +1,17 @@
 import { spawn } from "node:child_process";
 import type pino from "pino";
-import type {
-  Ticket,
-  AssessmentResult,
-  AgentResult,
-  AgentConfiguration,
-  Repository,
-} from "../../../core/types.js";
+import type { Ticket } from "../../ticketing/types.js";
+import type { AssessmentResult } from "../../../core/orchestrator/types.js";
+import type { AgentResult } from "../types.js";
+import type { AgentConfiguration } from "../../../core/configuration/types.js";
+import type { Repository } from "../../source-control/types.js";
 import { CodingAgent } from "../base.js";
 import { buildAssessmentPrompt } from "../prompts/assessment.js";
 import { buildExecutionPrompt } from "../prompts/execution.js";
+import { validateAssessmentResult } from "../../../core/orchestrator/assessment-result.schema.js";
+
+const ASSESSMENT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const EXECUTION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
 interface CursorJsonResult {
   result?: string;
@@ -21,14 +23,14 @@ export class CursorAgent extends CodingAgent {
   readonly name = "cursor";
   private readonly logger: pino.Logger;
 
-  constructor(logger: pino.Logger) {
+  constructor(logger: pino.Logger, private readonly apiKey: string) {
     super();
     this.logger = logger.child({ component: "cursor-agent" });
   }
 
-  async isAvailable(): Promise<boolean> {
+  async healthCheck(): Promise<boolean> {
     try {
-      await this.runCursorCommand(["--version"], process.cwd(), 10_000);
+      await this.runCursorCommand(["--version"], 10_000);
       return true;
     } catch {
       return false;
@@ -48,14 +50,16 @@ export class CursorAgent extends CodingAgent {
 
     const output = await this.runCursorCommand(
       ["-p", "--output-format", "json", prompt],
-      process.cwd(),
-      300_000
+      ASSESSMENT_TIMEOUT_MS
     );
 
     const parsed = JSON.parse(output) as CursorJsonResult;
-    const resultText = parsed.result ?? output;
+    if (parsed.result === undefined) {
+      throw new Error("Cursor CLI assessment response missing result field");
+    }
 
-    const assessment = this.parseAssessmentFromText(resultText);
+    const rawAssessment = this.parseAssessmentFromText(parsed.result);
+    const assessment = validateAssessmentResult(rawAssessment);
 
     this.logger.info(
       {
@@ -73,11 +77,8 @@ export class CursorAgent extends CodingAgent {
     ticket: Ticket,
     workDirectories: string[],
     assessment: AssessmentResult,
-    configuration: AgentConfiguration
   ): Promise<AgentResult> {
     const prompt = buildExecutionPrompt(ticket, assessment, workDirectories);
-    const primaryWorkDirectory = workDirectories[0] ?? process.cwd();
-    const timeoutMilliseconds = configuration.execution.timeoutMinutes * 60 * 1000;
 
     this.logger.info(
       { ticketId: ticket.externalId, workDirectories },
@@ -86,22 +87,14 @@ export class CursorAgent extends CodingAgent {
 
     const output = await this.runCursorCommand(
       ["-p", "--force", "--output-format", "json", prompt],
-      primaryWorkDirectory,
-      timeoutMilliseconds
+      EXECUTION_TIMEOUT_MS
     );
 
-    let success = true;
-    let summary = "";
-
-    try {
-      const parsed = JSON.parse(output) as CursorJsonResult;
-      summary = parsed.result ?? output;
-      if (parsed.error) {
-        success = false;
-        summary = parsed.error;
-      }
-    } catch {
-      summary = output;
+    const parsed = JSON.parse(output) as CursorJsonResult;
+    const success = !parsed.error;
+    const summary = parsed.error ?? parsed.result;
+    if (summary === undefined) {
+      throw new Error("Cursor CLI execution response missing result field");
     }
 
     this.logger.info(
@@ -120,13 +113,13 @@ export class CursorAgent extends CodingAgent {
 
   private runCursorCommand(
     arguments_: string[],
-    workingDirectory: string,
     timeoutMilliseconds: number
   ): Promise<string> {
+    const args = ["--api-key", this.apiKey, ...arguments_];
+
     return new Promise((resolve, reject) => {
-      const process_ = spawn("agent", arguments_, {
-        cwd: workingDirectory,
-        env: { ...process.env },
+      const process_ = spawn("agent", args, {
+        cwd: process.cwd(),
         stdio: ["ignore", "pipe", "pipe"],
       });
 
@@ -168,12 +161,12 @@ export class CursorAgent extends CodingAgent {
     });
   }
 
-  private parseAssessmentFromText(text: string): AssessmentResult {
+  private parseAssessmentFromText(text: string): unknown {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Could not find JSON in Cursor CLI assessment response");
     }
 
-    return JSON.parse(jsonMatch[0]) as AssessmentResult;
+    return JSON.parse(jsonMatch[0]) as unknown;
   }
 }

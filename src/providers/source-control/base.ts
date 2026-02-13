@@ -2,7 +2,7 @@ import type {
   Repository,
   CreatePullRequestParameters,
   PullRequest,
-} from "../../core/types.js";
+} from "./types.js";
 
 export abstract class SourceControlProvider {
   abstract readonly name: string;

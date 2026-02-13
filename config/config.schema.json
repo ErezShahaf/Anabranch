@@ -20,9 +20,10 @@
     },
     "agent": {
       "type": "object",
-      "required": ["provider", "assessment", "execution"],
+      "required": ["provider", "apiKey", "assessment", "execution"],
       "properties": {
         "provider": { "type": "string", "enum": ["claude-code", "cursor"] },
+        "apiKey": { "type": "string", "minLength": 1 },
         "assessment": {
           "type": "object",
           "required": ["confidenceThreshold", "maxScope"],

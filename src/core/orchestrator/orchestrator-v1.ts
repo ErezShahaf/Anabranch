@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
-import type { TicketTask, AssessedTicketTask } from "../types.js";
+import type { TicketTask, AssessedTicketTask } from "../queue/types.js";
 import { TaskOrchestrator } from "./base.js";
 import { AssessmentService } from "./assessment.service.js";
 import { ExecutionService } from "./execution.service.js";

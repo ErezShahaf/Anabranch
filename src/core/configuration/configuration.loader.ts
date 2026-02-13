@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as parseYaml } from "js-yaml";
 import Ajv from "ajv";
-import type { ApplicationConfiguration } from "../types.js";
+import type { ApplicationConfiguration } from "./types.js";
 
 const ENVIRONMENT_VARIABLE_PATTERN = /\$\{(\w+)\}/g;
 
@@ -65,34 +65,11 @@ function validateWithSchema(data: unknown): ApplicationConfiguration {
   return data as ApplicationConfiguration;
 }
 
-function validateAgentApiKey(configuration: ApplicationConfiguration): void {
-  const provider = configuration.agent.provider;
-
-  const requiredKeyByProvider: Record<string, string> = {
-    "claude-code": "ANTHROPIC_API_KEY",
-    cursor: "CURSOR_API_KEY",
-  };
-
-  const requiredKey = requiredKeyByProvider[provider];
-  if (!requiredKey) {
-    throw new Error(`Unknown agent provider: "${provider}"`);
-  }
-
-  if (!process.env[requiredKey]) {
-    throw new Error(
-      `Agent provider is set to "${provider}" but the required environment variable ${requiredKey} is not set.`
-    );
-  }
-}
-
 export function loadConfiguration(): ApplicationConfiguration {
   const filePath = findConfigurationFilePath();
   const rawContent = readFileSync(filePath, "utf-8");
   const withEnvironmentVariables = substituteEnvironmentVariables(rawContent);
   const parsed = parseYaml(withEnvironmentVariables) as unknown;
-  const validated = validateWithSchema(parsed);
 
-  validateAgentApiKey(validated);
-
-  return validated;
+  return validateWithSchema(parsed);
 }

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
-import type { TicketTask } from "../types.js";
+import type { TicketTask } from "./types.js";
 import type { TaskQueue } from "./task-queue.js";
 
 // temporary until a real task queue is implemented for horizontal scaling support
@@ -26,7 +26,7 @@ export class InMemoryTaskQueue implements TaskQueue {
     return this.pendingTasks.shift() ?? null;
   }
 
-  onEnqueued(callback: () => void): void {
+  registerOnEnqueuedCallback(callback: () => void): void {
     this.enqueuedCallback = callback;
   }
 }
