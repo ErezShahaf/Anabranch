@@ -88,10 +88,6 @@ export class JiraService extends TicketProvider {
       );
       return null;
     }
-    if (!body.issue?.fields?.summary) {
-      this.logger.debug("ignoring Jira event with no issue title");
-      return null;
-    }
     const ticket = this.normalizeIssue(body.issue);
     return { type: "created", ticket, rawPayload: body };
   }
