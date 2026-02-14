@@ -14,6 +14,12 @@ import { SourceControlProvider } from "../base.js";
 
 const execFileAsync = promisify(execFile);
 
+const MAX_PAGE_SIZE = 100;
+const CLONE_TIMEOUT_MS = 300_000; // 5 minutes
+const FETCH_TIMEOUT_MS = 120_000; // 2 minutes
+const PULL_TIMEOUT_MS = 120_000; // 2 minutes
+const PUSH_TIMEOUT_MS = 120_000; // 2 minutes
+
 export class GitHubProvider extends SourceControlProvider {
   readonly name = "github";
   private readonly octokit: Octokit;
@@ -42,13 +48,11 @@ export class GitHubProvider extends SourceControlProvider {
 
   async listRepositories(): Promise<Repository[]> {
     const repositories: Repository[] = [];
-    let page = 1;
-    const perPage = 100;
 
-    while (true) {
+    for (let page = 1; ; page++) {
       const response =
         await this.octokit.apps.listReposAccessibleToInstallation({
-          per_page: perPage,
+          per_page: MAX_PAGE_SIZE,
           page,
         });
 
@@ -69,11 +73,9 @@ export class GitHubProvider extends SourceControlProvider {
         });
       }
 
-      if (batch.length < perPage) {
+      if (batch.length < MAX_PAGE_SIZE) {
         break;
       }
-
-      page++;
     }
 
     this.logger.info(
@@ -91,7 +93,7 @@ export class GitHubProvider extends SourceControlProvider {
     const cloneUrl = await this.getAuthenticatedCloneUrl(repository);
 
     await execFileAsync("git", ["clone", cloneUrl, targetPath], {
-      timeout: 300_000,
+      timeout: CLONE_TIMEOUT_MS,
     });
 
     this.logger.info(
@@ -103,12 +105,12 @@ export class GitHubProvider extends SourceControlProvider {
   async pullLatest(repositoryPath: string): Promise<void> {
     await execFileAsync("git", ["fetch", "--all", "--prune"], {
       cwd: repositoryPath,
-      timeout: 120_000,
+      timeout: FETCH_TIMEOUT_MS,
     });
 
     await execFileAsync("git", ["pull", "--ff-only"], {
       cwd: repositoryPath,
-      timeout: 120_000,
+      timeout: PULL_TIMEOUT_MS,
     });
 
     this.logger.debug({ path: repositoryPath }, "pulled latest changes");
@@ -121,7 +123,7 @@ export class GitHubProvider extends SourceControlProvider {
     await execFileAsync(
       "git",
       ["push", "origin", branchName, "--force-with-lease"],
-      { cwd: repositoryPath, timeout: 120_000 }
+      { cwd: repositoryPath, timeout: PUSH_TIMEOUT_MS }
     );
 
     this.logger.info(

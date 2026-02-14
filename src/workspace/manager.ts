@@ -2,10 +2,11 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { Injectable, type OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, type OnModuleInit } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
 import type { Repository } from "../providers/source-control/types.js";
-import { SourceControlProvider } from "../providers/source-control/base.js";
+import type { SourceControlProvider } from "../providers/source-control/base.js";
+import { SOURCE_CONTROL_PROVIDER } from "../providers/source-control/tokens.js";
 import { ConfigurationService } from "../core/configuration/configuration.service.js";
 
 const execFileAsync = promisify(execFile);
@@ -17,7 +18,7 @@ export class WorkspaceManager implements OnModuleInit {
 
   constructor(
     configService: ConfigurationService,
-    sourceControl: SourceControlProvider,
+    @Inject(SOURCE_CONTROL_PROVIDER) sourceControl: SourceControlProvider,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext("workspace-manager");

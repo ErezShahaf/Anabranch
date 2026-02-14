@@ -1,14 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
 import type { AssessedTicketTask } from "../queue/types.js";
 import type { Repository, PullRequest } from "../../providers/source-control/types.js";
-import { SourceControlProvider } from "../../providers/source-control/base.js";
+import type { SourceControlProvider } from "../../providers/source-control/base.js";
+import { SOURCE_CONTROL_PROVIDER } from "../../providers/source-control/tokens.js";
 import { WorkspaceManager } from "../../workspace/manager.js";
 
 @Injectable()
 export class PullRequestService {
   constructor(
-    private readonly sourceControl: SourceControlProvider,
+    @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
     private readonly workspaceManager: WorkspaceManager,
     private readonly logger: PinoLogger,
   ) {

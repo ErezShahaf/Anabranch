@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, NotImplementedException } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
 import type {
   Ticket,
@@ -31,34 +31,12 @@ export class JiraService extends TicketProvider {
   }
 
   async handleWebhookRequest(
-    headers: Record<string, string>,
-    body: unknown,
+    _headers: Record<string, string>,
+    body: JiraWebhookPayload,
   ): Promise<void> {
-    const rawBody = JSON.stringify(body);
-
-    if (this.webhookSecret) {
-      const signature = headers["x-hub-signature"];
-      if (!signature) {
-        this.logger.warn("received webhook without required x-hub-signature header");
-        return;
-      }
-      if (!this.isValidWebhookSignature(signature, rawBody)) {
-        this.logger.warn("received webhook with invalid signature");
-        return;
-      }
-    }
-
     const event = this.parseWebhookPayload(body);
 
     if (!event) {
-      return;
-    }
-
-    if (!this.passesFilters(event.ticket)) {
-      this.logger.info(
-        { ticketId: event.ticket.externalId },
-        "ticket did not pass filters",
-      );
       return;
     }
 
@@ -88,45 +66,40 @@ export class JiraService extends TicketProvider {
   }
 
   async getTicket(_ticketId: string): Promise<Ticket> {
-    // Future: call Jira REST API to fetch full ticket details
-    throw new Error("Direct Jira ticket fetching is not yet implemented");
+    // Could call Jira REST API GET /rest/api/3/issue/{id} for full issue.
+    // Extra data vs webhook: full description, comments, attachments, custom fields, history, watchers.
+    throw new NotImplementedException(
+      "Direct Jira ticket fetching is not yet implemented",
+    );
   }
 
   async addComment(_ticketId: string, _comment: string): Promise<void> {
-    // Future: call Jira REST API to post a comment
-    throw new Error("Jira comment posting is not yet implemented");
+    // Could POST to Jira REST API to add a comment (e.g. execution summary, assessment, PR links).
+    throw new NotImplementedException(
+      "Jira comment posting is not yet implemented",
+    );
   }
 
-  protected parseWebhookPayload(body: unknown): TicketEvent | null {
-    const payload = body as JiraWebhookPayload;
-
-    if (!payload.webhookEvent || !payload.issue) {
-      this.logger.warn("received malformed Jira webhook payload");
-      return null;
-    }
-
-    if (payload.webhookEvent !== "jira:issue_created") {
+  protected parseWebhookPayload(body: JiraWebhookPayload): TicketEvent | null {
+    if (body.webhookEvent !== "jira:issue_created") {
       this.logger.debug(
-        { event: payload.webhookEvent },
+        { event: body.webhookEvent },
         "ignoring non-creation Jira event",
       );
       return null;
     }
-
-    const ticket = this.normalizeIssue(payload.issue);
-
-    return {
-      type: "created",
-      ticket,
-      rawPayload: body,
-    };
+    if (!body.issue?.fields?.summary) {
+      this.logger.debug("ignoring Jira event with no issue title");
+      return null;
+    }
+    const ticket = this.normalizeIssue(body.issue);
+    return { type: "created", ticket, rawPayload: body };
   }
 
   protected isValidWebhookSignature(signature: string, body: string): boolean {
     const expectedSignature = createHmac("sha256", this.webhookSecret)
       .update(body)
       .digest("hex");
-
     return signature === expectedSignature;
   }
 
@@ -137,9 +110,9 @@ export class JiraService extends TicketProvider {
     return {
       id: issue.id,
       externalId: issue.key,
-      title: fields.summary,
+      title: fields.summary ?? "",
       description: fields.description ?? "",
-      labels: fields.labels,
+      labels: fields.labels ?? [],
       assignee: fields.assignee?.displayName ?? null,
       priority: fields.priority?.name ?? null,
       issueType: fields.issuetype?.name ?? null,
@@ -151,45 +124,5 @@ export class JiraService extends TicketProvider {
         statusName: fields.status?.name,
       },
     };
-  }
-
-  private passesFilters(ticket: Ticket): boolean {
-    if (this.filters.projects.length > 0) {
-      if (!this.filters.projects.includes(ticket.project)) {
-        return false;
-      }
-    }
-
-    if (this.filters.labels.length > 0) {
-      const hasAllRequiredLabels = this.filters.labels.every((label) =>
-        ticket.labels.includes(label)
-      );
-      if (!hasAllRequiredLabels) {
-        return false;
-      }
-    }
-
-    if (this.filters.excludeLabels.length > 0) {
-      const hasExcludedLabel = this.filters.excludeLabels.some((label) =>
-        ticket.labels.includes(label)
-      );
-      if (hasExcludedLabel) {
-        return false;
-      }
-    }
-
-    if (this.filters.issueTypes.length > 0) {
-      if (ticket.issueType && !this.filters.issueTypes.includes(ticket.issueType)) {
-        return false;
-      }
-    }
-
-    if (this.filters.assignees.length > 0) {
-      if (!ticket.assignee || !this.filters.assignees.includes(ticket.assignee)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 }

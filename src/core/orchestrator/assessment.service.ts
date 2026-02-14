@@ -1,10 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
 import type { TicketTask } from "../queue/types.js";
 import type { AssessmentResult, TaskScope } from "./types.js";
 import type { Repository } from "../../providers/source-control/types.js";
-import { CodingAgent } from "../../providers/agents/base.js";
-import { SourceControlProvider } from "../../providers/source-control/base.js";
+import type { CodingAgent } from "../../providers/agents/base.js";
+import type { SourceControlProvider } from "../../providers/source-control/base.js";
+import { CODING_AGENT } from "../../providers/agents/tokens.js";
+import { SOURCE_CONTROL_PROVIDER } from "../../providers/source-control/tokens.js";
 import { ConfigurationService } from "../configuration/configuration.service.js";
 
 const SCOPE_SEVERITY_ORDER: TaskScope[] = [
@@ -18,8 +20,8 @@ const SCOPE_SEVERITY_ORDER: TaskScope[] = [
 @Injectable()
 export class AssessmentService {
   constructor(
-    private readonly codingAgent: CodingAgent,
-    private readonly sourceControl: SourceControlProvider,
+    @Inject(CODING_AGENT) private readonly codingAgent: CodingAgent,
+    @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
     private readonly configService: ConfigurationService,
     private readonly logger: PinoLogger,
   ) {

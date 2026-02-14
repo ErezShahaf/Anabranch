@@ -1,9 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
 import type { ApplicationConfiguration } from "../configuration/types.js";
 import type { AssessedTicketTask } from "../queue/types.js";
 import type { Repository } from "../../providers/source-control/types.js";
-import { CodingAgent } from "../../providers/agents/base.js";
+import type { CodingAgent } from "../../providers/agents/base.js";
+import { CODING_AGENT } from "../../providers/agents/tokens.js";
 import { WorkspaceManager } from "../../workspace/manager.js";
 import { PullRequestService } from "./pull-request.service.js";
 import { ConfigurationService } from "../configuration/configuration.service.js";
@@ -15,7 +16,7 @@ export class ExecutionService {
   readonly logger: PinoLogger;
 
   constructor(
-    private readonly codingAgent: CodingAgent,
+    @Inject(CODING_AGENT) private readonly codingAgent: CodingAgent,
     private readonly workspaceManager: WorkspaceManager,
     private readonly pullRequestService: PullRequestService,
     configService: ConfigurationService,

@@ -1,14 +1,18 @@
 import { Module } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
-import { SourceControlProvider } from "./base.js";
+import type { SourceControlProvider } from "./base.js";
 import { GitHubProvider } from "./github/provider.js";
+import { SOURCE_CONTROL_PROVIDER } from "./tokens.js";
 import { ConfigurationService } from "../../core/configuration/configuration.service.js";
 
 @Module({
   providers: [
     {
-      provide: SourceControlProvider,
-      useFactory: (configService: ConfigurationService, logger: PinoLogger) => {
+      provide: SOURCE_CONTROL_PROVIDER,
+      useFactory: (
+        configService: ConfigurationService,
+        logger: PinoLogger,
+      ): SourceControlProvider => {
         return new GitHubProvider(
           configService.config.sourceControl.github,
           logger.logger,
@@ -17,6 +21,6 @@ import { ConfigurationService } from "../../core/configuration/configuration.ser
       inject: [ConfigurationService, PinoLogger],
     },
   ],
-  exports: [SourceControlProvider],
+  exports: [SOURCE_CONTROL_PROVIDER],
 })
 export class SourceControlModule {}
