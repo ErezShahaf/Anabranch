@@ -24,9 +24,7 @@ export class AssessmentService {
     @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
     private readonly configService: ConfigurationService,
     private readonly logger: PinoLogger,
-  ) {
-    this.logger.setContext("assessment");
-  }
+  ) {}
 
   async listRepositories(): Promise<Repository[]> {
     return this.sourceControl.listRepositories();

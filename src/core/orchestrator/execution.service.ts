@@ -19,12 +19,11 @@ export class ExecutionService {
     @Inject(CODING_AGENT) private readonly codingAgent: CodingAgent,
     private readonly workspaceManager: WorkspaceManager,
     private readonly pullRequestService: PullRequestService,
-    configService: ConfigurationService,
+    @Inject(ConfigurationService) configService: ConfigurationService,
     logger: PinoLogger,
   ) {
     this.configuration = configService.config;
     this.logger = logger;
-    this.logger.setContext("execution");
   }
 
   @Retry({

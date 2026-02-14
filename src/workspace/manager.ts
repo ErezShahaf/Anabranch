@@ -21,7 +21,6 @@ export class WorkspaceManager implements OnModuleInit {
     @Inject(SOURCE_CONTROL_PROVIDER) sourceControl: SourceControlProvider,
     private readonly logger: PinoLogger,
   ) {
-    this.logger.setContext("workspace-manager");
     this.basePath = configService.config.workspace.basePath;
     this.sourceControl = sourceControl;
   }

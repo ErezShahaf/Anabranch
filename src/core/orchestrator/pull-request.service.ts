@@ -12,9 +12,7 @@ export class PullRequestService {
     @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
     private readonly workspaceManager: WorkspaceManager,
     private readonly logger: PinoLogger,
-  ) {
-    this.logger.setContext("pull-request");
-  }
+  ) {}
 
   async createPullRequestsForRepositories(
     task: AssessedTicketTask,

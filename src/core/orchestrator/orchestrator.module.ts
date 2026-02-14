@@ -1,4 +1,7 @@
 import { Module } from "@nestjs/common";
+import { PinoLogger } from "nestjs-pino";
+import type { CodingAgent } from "../../providers/agents/base.js";
+import { CODING_AGENT } from "../../providers/agents/tokens.js";
 import { TaskOrchestrator } from "./base.js";
 import { OrchestratorV1 } from "./orchestrator-v1.js";
 import { AssessmentService } from "./assessment.service.js";
@@ -7,13 +10,39 @@ import { PullRequestService } from "./pull-request.service.js";
 import { AgentsModule } from "../../providers/agents/agents.module.js";
 import { SourceControlModule } from "../../providers/source-control/source-control.module.js";
 import { WorkspaceModule } from "../../workspace/workspace.module.js";
+import { LoggerModule } from "../logger/logger.module.js";
+import { ConfigurationModule } from "../configuration/configuration.module.js";
 import { ConfigurationService } from "../configuration/configuration.service.js";
+import { WorkspaceManager } from "../../workspace/manager.js";
 
 @Module({
-  imports: [AgentsModule, SourceControlModule, WorkspaceModule],
+  imports: [
+    ConfigurationModule,
+    LoggerModule,
+    AgentsModule,
+    SourceControlModule,
+    WorkspaceModule,
+  ],
   providers: [
     AssessmentService,
-    ExecutionService,
+    {
+      provide: ExecutionService,
+      useFactory: (
+        codingAgent: CodingAgent,
+        workspaceManager: WorkspaceManager,
+        pullRequestService: PullRequestService,
+        configService: ConfigurationService,
+        logger: PinoLogger,
+      ) =>
+        new ExecutionService(
+          codingAgent,
+          workspaceManager,
+          pullRequestService,
+          configService,
+          logger,
+        ),
+      inject: [CODING_AGENT, WorkspaceManager, PullRequestService, ConfigurationService, PinoLogger],
+    },
     PullRequestService,
     OrchestratorV1,
     {

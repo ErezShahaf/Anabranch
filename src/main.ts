@@ -1,3 +1,4 @@
+import "dotenv/config";
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { Logger, PinoLogger } from "nestjs-pino";
@@ -5,12 +6,12 @@ import { AppModule } from "./app.module.js";
 import { ConfigurationService } from "./core/configuration/configuration.service.js";
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: false });
 
   app.useLogger(app.get(Logger));
 
   const configService = app.get(ConfigurationService);
-  const logger = app.get(PinoLogger);
+  const logger = await app.resolve(PinoLogger);
 
   logger.info("starting anabranch");
 

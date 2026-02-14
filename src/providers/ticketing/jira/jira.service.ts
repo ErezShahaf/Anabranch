@@ -24,7 +24,6 @@ export class JiraService extends TicketProvider {
     private readonly logger: PinoLogger,
   ) {
     super();
-    this.logger.setContext("jira-provider");
     const config = configService.config.ticketing.jira;
     this.webhookSecret = config.webhookSecret;
     this.filters = config.filters;

@@ -9,9 +9,7 @@ export class InMemoryTaskQueue implements TaskQueue {
   private readonly pendingTasks: TicketTask[] = [];
   private enqueuedCallback: (() => void) | null = null;
 
-  constructor(private readonly logger: PinoLogger) {
-    this.logger.setContext("task-queue");
-  }
+  constructor(private readonly logger: PinoLogger) {}
 
   async enqueue(task: TicketTask): Promise<void> {
     this.pendingTasks.push(task);

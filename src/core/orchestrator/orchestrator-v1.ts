@@ -15,7 +15,6 @@ export class OrchestratorV1 extends TaskOrchestrator {
     private readonly logger: PinoLogger,
   ) {
     super();
-    this.logger.setContext("orchestrator");
   }
 
   async handleTask(task: TicketTask): Promise<void> {

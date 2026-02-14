@@ -12,9 +12,7 @@ export class TaskProcessorService implements OnModuleInit {
     @Inject(TASK_QUEUE) private readonly taskQueue: TaskQueue,
     private readonly orchestrator: TaskOrchestrator,
     private readonly logger: PinoLogger,
-  ) {
-    this.logger.setContext("task-processor");
-  }
+  ) {}
 
   onModuleInit(): void {
     this.taskQueue.registerOnEnqueuedCallback(() => this.processNext());
