@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { Octokit } from "@octokit/rest";
 import { createAppAuth } from "@octokit/auth-app";
-import type pino from "pino";
+import { Logger } from "@nestjs/common";
 import type { GitHubSourceControlConfiguration } from "../../../core/configuration/types.js";
 import type {
   Repository,
@@ -23,15 +23,15 @@ export class GitHubProvider extends SourceControlProvider {
   readonly name = "github";
   private readonly octokit: Octokit;
   private readonly configuration: GitHubSourceControlConfiguration;
-  private readonly logger: pino.Logger;
+  private readonly logger: Logger;
 
   constructor(
     configuration: GitHubSourceControlConfiguration,
-    logger: pino.Logger
+    logger: Logger,
   ) {
     super();
     this.configuration = configuration;
-    this.logger = logger.child({ component: "github-provider" });
+    this.logger = logger;
 
     const privateKey = configuration.privateKey.replace(/\\n/g, "\n");
 
@@ -77,9 +77,8 @@ export class GitHubProvider extends SourceControlProvider {
       }
     }
 
-    this.logger.info(
-      { repositoryCount: repositories.length },
-      "discovered repositories from GitHub App installation"
+    this.logger.log(
+      `discovered ${repositories.length} repositories from GitHub App installation`,
     );
 
     return repositories;
@@ -95,10 +94,7 @@ export class GitHubProvider extends SourceControlProvider {
       timeout: CLONE_TIMEOUT_MS,
     });
 
-    this.logger.info(
-      { repository: repository.fullName, path: targetPath },
-      "repository cloned"
-    );
+    this.logger.log(`repository cloned: ${repository.fullName}`);
   }
 
   async pullLatest(repositoryPath: string): Promise<void> {
@@ -112,7 +108,7 @@ export class GitHubProvider extends SourceControlProvider {
       timeout: PULL_TIMEOUT_MS,
     });
 
-    this.logger.debug({ path: repositoryPath }, "pulled latest changes");
+    this.logger.debug(`pulled latest changes for ${repositoryPath}`);
   }
 
   async pushBranch(
@@ -125,10 +121,7 @@ export class GitHubProvider extends SourceControlProvider {
       { cwd: repositoryPath, timeout: PUSH_TIMEOUT_MS }
     );
 
-    this.logger.info(
-      { path: repositoryPath, branch: branchName },
-      "branch pushed"
-    );
+    this.logger.log(`branch pushed: ${branchName}`);
   }
 
   async createPullRequest(
@@ -151,10 +144,7 @@ export class GitHubProvider extends SourceControlProvider {
       baseBranch: parameters.baseBranch,
     };
 
-    this.logger.info(
-      { pullRequestNumber: pullRequest.number, url: pullRequest.url },
-      "pull request created"
-    );
+    this.logger.log(`pull request created: ${pullRequest.url}`);
 
     return pullRequest;
   }

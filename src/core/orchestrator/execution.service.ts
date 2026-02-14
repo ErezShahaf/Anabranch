@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type { ApplicationConfiguration } from "../configuration/types.js";
 import type { AssessedTicketTask } from "../queue/types.js";
 import type { Repository } from "../../providers/source-control/types.js";
@@ -13,25 +13,22 @@ import { Retry } from "../../common/decorators/retry.decorator.js";
 @Injectable()
 export class ExecutionService {
   readonly configuration: ApplicationConfiguration;
-  readonly logger: PinoLogger;
+  readonly logger = new Logger(ExecutionService.name);
 
   constructor(
     @Inject(CODING_AGENT) private readonly codingAgent: CodingAgent,
     private readonly workspaceManager: WorkspaceManager,
     private readonly pullRequestService: PullRequestService,
     @Inject(ConfigurationService) configService: ConfigurationService,
-    logger: PinoLogger,
   ) {
     this.configuration = configService.config;
-    this.logger = logger;
   }
 
   @Retry({
     maxRetries: (self: ExecutionService) => self.configuration.agent.execution.retries,
     onRetry: (self: ExecutionService, attempt: number, error: Error) => {
       self.logger.warn(
-        { attempt, error: error.message },
-        "execution attempt failed, retrying",
+        `execution attempt ${attempt} failed, retrying: ${error.message}`,
       );
     },
   })
@@ -59,8 +56,7 @@ export class ExecutionService {
 
       if (!agentResult.success) {
         this.logger.error(
-          { ticketId, error: agentResult.summary },
-          "agent execution failed",
+          `agent execution failed for ${ticketId}: ${agentResult.summary}`,
         );
         throw new Error(`Agent execution failed: ${agentResult.summary}`);
       }
@@ -90,10 +86,9 @@ export class ExecutionService {
           await this.workspaceManager.cleanupWorkspace(worktreePath);
         } catch (error: unknown) {
           const message = error instanceof Error ? error.message : String(error);
-          this.logger.warn(
-            { ticketId, repository: repositoryFullName, error: message },
-            "failed to clean up worktree",
-          );
+        this.logger.warn(
+          `failed to clean up worktree for ${repositoryFullName}: ${message}`,
+        );
         }
       }
     }

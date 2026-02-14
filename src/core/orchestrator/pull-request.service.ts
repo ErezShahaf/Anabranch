@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type { AssessedTicketTask } from "../queue/types.js";
 import type { Repository, PullRequest } from "../../providers/source-control/types.js";
 import type { SourceControlProvider } from "../../providers/source-control/base.js";
@@ -8,10 +8,11 @@ import { WorkspaceManager } from "../../workspace/manager.js";
 
 @Injectable()
 export class PullRequestService {
+  private readonly logger = new Logger(PullRequestService.name);
+
   constructor(
     @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
     private readonly workspaceManager: WorkspaceManager,
-    private readonly logger: PinoLogger,
   ) {}
 
   async createPullRequestsForRepositories(
@@ -47,9 +48,8 @@ export class PullRequestService {
       });
 
       createdPullRequests.push(pullRequest);
-      this.logger.info(
-        { ticketId, repository: repository.fullName, pullRequestUrl: pullRequest.url },
-        "pull request created",
+      this.logger.log(
+        `pull request created for ${repository.fullName}: ${pullRequest.url}`,
       );
     }
 

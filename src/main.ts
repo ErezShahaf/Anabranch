@@ -1,27 +1,27 @@
 import "dotenv/config";
 import "reflect-metadata";
+import { Logger as NestLogger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import { Logger, PinoLogger } from "nestjs-pino";
+import { Logger } from "nestjs-pino";
 import { AppModule } from "./app.module.js";
 import { ConfigurationService } from "./core/configuration/configuration.service.js";
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
 
+  const logger = new NestLogger("Bootstrap");
+  logger.log("starting anabranch");
+
   const configService = app.get(ConfigurationService);
-  const logger = await app.resolve(PinoLogger);
-
-  logger.info("starting anabranch");
-
   const { port, host } = configService.config.server;
   await app.listen(port, host);
 
-  logger.info({ port, host }, "anabranch is ready");
+  logger.log(`anabranch is ready on ${host}:${port}`);
 
   const shutdown = async (signal: string) => {
-    logger.info({ signal }, "received shutdown signal, closing server");
+    logger.log(`received shutdown signal: ${signal}`);
 
     const forceExitTimeout = setTimeout(() => {
       logger.error("graceful shutdown timed out, forcing exit");
@@ -31,7 +31,7 @@ async function bootstrap(): Promise<void> {
     try {
       await app.close();
       clearTimeout(forceExitTimeout);
-      logger.info("server closed");
+      logger.log("server closed");
       process.exit(0);
     } catch {
       clearTimeout(forceExitTimeout);
@@ -45,6 +45,7 @@ async function bootstrap(): Promise<void> {
 
 bootstrap().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`Fatal startup error: ${message}\n`);
+  const stack = error instanceof Error ? error.stack : "";
+  process.stderr.write(`Fatal startup error: ${message}\n${stack ?? ""}\n`);
   process.exit(1);
 });

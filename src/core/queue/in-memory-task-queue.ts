@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type { TicketTask } from "./types.js";
 import type { TaskQueue } from "./task-queue.js";
 
@@ -8,15 +8,11 @@ import type { TaskQueue } from "./task-queue.js";
 export class InMemoryTaskQueue implements TaskQueue {
   private readonly pendingTasks: TicketTask[] = [];
   private enqueuedCallback: (() => void) | null = null;
-
-  constructor(private readonly logger: PinoLogger) {}
+  private readonly logger = new Logger(InMemoryTaskQueue.name);
 
   async enqueue(task: TicketTask): Promise<void> {
     this.pendingTasks.push(task);
-    this.logger.info(
-      { taskId: task.id, ticketId: task.ticket.externalId },
-      "task enqueued"
-    );
+    this.logger.log(`task enqueued: ${task.id} (ticket: ${task.ticket.externalId})`);
     this.enqueuedCallback?.();
   }
 

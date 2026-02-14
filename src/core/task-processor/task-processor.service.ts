@@ -1,24 +1,24 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type { TaskQueue } from "../queue/task-queue.js";
 import { TASK_QUEUE } from "../queue/tokens.js";
-import { TaskOrchestrator } from "../orchestrator/base.js";
+import type { TaskOrchestrator } from "../orchestrator/base.js";
+import { TASK_ORCHESTRATOR } from "../orchestrator/tokens.js";
 
 @Injectable()
 export class TaskProcessorService implements OnModuleInit {
   private processing = false;
+  private readonly logger = new Logger(TaskProcessorService.name);
 
   constructor(
     @Inject(TASK_QUEUE) private readonly taskQueue: TaskQueue,
-    private readonly orchestrator: TaskOrchestrator,
-    private readonly logger: PinoLogger,
+    @Inject(TASK_ORCHESTRATOR) private readonly orchestrator: TaskOrchestrator,
   ) {}
 
   onModuleInit(): void {
     this.taskQueue.registerOnEnqueuedCallback(() => this.processNext());
-    this.logger.info(
-      { orchestrator: this.orchestrator.name },
-      "task processor started, listening for tasks",
+    this.logger.log(
+      `task processor started, listening for tasks`,
     );
   }
 
@@ -33,9 +33,8 @@ export class TaskProcessorService implements OnModuleInit {
       let task = this.taskQueue.dequeue();
 
       while (task !== null) {
-        this.logger.info(
-          { taskId: task.id, ticketId: task.ticket.externalId },
-          "processing task",
+        this.logger.log(
+          `processing task ${task.id} (ticket: ${task.ticket.externalId})`,
         );
 
         try {
@@ -43,8 +42,7 @@ export class TaskProcessorService implements OnModuleInit {
         } catch (error: unknown) {
           const message = error instanceof Error ? error.message : String(error);
           this.logger.error(
-            { taskId: task.id, error: message },
-            "task processing failed with unexpected error",
+            `task processing failed for ${task.id}: ${message}`,
           );
         }
 

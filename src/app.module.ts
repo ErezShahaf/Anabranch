@@ -5,7 +5,6 @@ import { QueueModule } from "./core/queue/queue.module.js";
 import { TaskProcessorModule } from "./core/task-processor/task-processor.module.js";
 import { TicketingModule } from "./providers/ticketing/ticketing.module.js";
 import { HealthController } from "./controllers/health.controller.js";
-import { WebhookController } from "./controllers/webhook.controller.js";
 
 @Module({
   imports: [
@@ -15,6 +14,6 @@ import { WebhookController } from "./controllers/webhook.controller.js";
     TaskProcessorModule,
     TicketingModule,
   ],
-  controllers: [HealthController, WebhookController],
+  controllers: [HealthController],
 })
 export class AppModule {}

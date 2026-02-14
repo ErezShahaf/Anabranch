@@ -1,10 +1,9 @@
 import { Module } from "@nestjs/common";
-import { LoggerModule } from "../logger/logger.module.js";
 import { InMemoryTaskQueue } from "./in-memory-task-queue.js";
 import { TASK_QUEUE } from "./tokens.js";
 
 @Module({
-  imports: [LoggerModule],
+  imports: [],
   providers: [
     {
       provide: TASK_QUEUE,

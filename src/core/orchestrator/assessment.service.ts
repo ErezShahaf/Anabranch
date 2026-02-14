@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type { TicketTask } from "../queue/types.js";
 import type { AssessmentResult, TaskScope } from "./types.js";
 import type { Repository } from "../../providers/source-control/types.js";
@@ -19,11 +19,12 @@ const SCOPE_SEVERITY_ORDER: TaskScope[] = [
 
 @Injectable()
 export class AssessmentService {
+  private readonly logger = new Logger(AssessmentService.name);
+
   constructor(
     @Inject(CODING_AGENT) private readonly codingAgent: CodingAgent,
     @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
     private readonly configService: ConfigurationService,
-    private readonly logger: PinoLogger,
   ) {}
 
   async listRepositories(): Promise<Repository[]> {
@@ -37,14 +38,8 @@ export class AssessmentService {
     const assessment = await this.codingAgent.assess(task.ticket, repositories);
     task.assessment = assessment;
 
-    this.logger.info(
-      {
-        ticketId: task.ticket.externalId,
-        confidence: assessment.confidence,
-        scope: assessment.scope,
-        affectedRepositories: assessment.affectedRepositories,
-      },
-      "assessment complete",
+    this.logger.log(
+      `assessment complete for ${task.ticket.externalId} (confidence: ${assessment.confidence}, scope: ${assessment.scope})`,
     );
 
     return assessment;

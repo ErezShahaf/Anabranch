@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type { CodingAgent } from "./base.js";
 import { ClaudeCodeAgent } from "./claude-code/agent.js";
 import { CursorAgent } from "./cursor/agent.js";
@@ -11,20 +11,17 @@ import { ConfigurationService } from "../../core/configuration/configuration.ser
   providers: [
     {
       provide: CODING_AGENT,
-      useFactory: (
-        configService: ConfigurationService,
-        logger: PinoLogger,
-      ): CodingAgent => {
+      useFactory: (configService: ConfigurationService): CodingAgent => {
         switch (configService.config.agent.provider) {
           case "claude-code": {
             const anthropic = new AnthropicService(
               configService.config.agent.apiKey,
             );
-            return new ClaudeCodeAgent(anthropic, logger.logger);
+            return new ClaudeCodeAgent(anthropic, new Logger("ClaudeCodeAgent"));
           }
           case "cursor":
             return new CursorAgent(
-              logger.logger,
+              new Logger("CursorAgent"),
               configService.config.agent.apiKey,
             );
           default: {
@@ -33,7 +30,7 @@ import { ConfigurationService } from "../../core/configuration/configuration.ser
           }
         }
       },
-      inject: [ConfigurationService, PinoLogger],
+      inject: [ConfigurationService],
     },
   ],
   exports: [CODING_AGENT],

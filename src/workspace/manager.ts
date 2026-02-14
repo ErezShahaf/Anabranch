@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type { Repository } from "../providers/source-control/types.js";
 import type { SourceControlProvider } from "../providers/source-control/base.js";
 import { SOURCE_CONTROL_PROVIDER } from "../providers/source-control/tokens.js";
@@ -16,10 +16,11 @@ export class WorkspaceManager implements OnModuleInit {
   private readonly basePath: string;
   private readonly sourceControl: SourceControlProvider;
 
+  private readonly logger = new Logger(WorkspaceManager.name);
+
   constructor(
     configService: ConfigurationService,
     @Inject(SOURCE_CONTROL_PROVIDER) sourceControl: SourceControlProvider,
-    private readonly logger: PinoLogger,
   ) {
     this.basePath = configService.config.workspace.basePath;
     this.sourceControl = sourceControl;
@@ -35,16 +36,15 @@ export class WorkspaceManager implements OnModuleInit {
     this.ensureDirectoryExists(this.worktreesDirectory());
 
     const repositories = await this.sourceControl.listRepositories();
-    this.logger.info(
-      { count: repositories.length },
-      "syncing repositories to local workspace"
+    this.logger.log(
+      `syncing ${repositories.length} repositories to local workspace`,
     );
 
     for (const repository of repositories) {
       await this.ensureRepositoryCloned(repository);
     }
 
-    this.logger.info("workspace initialization complete");
+    this.logger.log("workspace initialization complete");
   }
 
   async prepareWorkspace(
@@ -59,8 +59,7 @@ export class WorkspaceManager implements OnModuleInit {
 
     if (existsSync(worktreePath)) {
       this.logger.warn(
-        { repository: repository.fullName, ticketId, path: worktreePath },
-        "worktree already exists, removing before re-creating"
+        `worktree already exists for ${repository.fullName}, removing before re-creating`,
       );
       await this.cleanupWorkspace(worktreePath);
     }
@@ -78,9 +77,8 @@ export class WorkspaceManager implements OnModuleInit {
       { cwd: repositoryPath, timeout: 60_000 }
     );
 
-    this.logger.info(
-      { repository: repository.fullName, ticketId, branch: branchName },
-      "worktree created"
+    this.logger.log(
+      `worktree created for ${repository.fullName} (${branchName})`,
     );
 
     return worktreePath;
@@ -95,7 +93,7 @@ export class WorkspaceManager implements OnModuleInit {
       { cwd: parentRepositoryPath, timeout: 30_000 }
     );
 
-    this.logger.debug({ path: worktreePath }, "worktree removed");
+    this.logger.debug(`worktree removed: ${worktreePath}`);
   }
 
   async hasUncommittedChanges(worktreePath: string): Promise<boolean> {
@@ -123,8 +121,7 @@ export class WorkspaceManager implements OnModuleInit {
 
     if (existsSync(repositoryPath)) {
       this.logger.debug(
-        { repository: repository.fullName },
-        "repository already cloned, pulling latest"
+        `repository ${repository.fullName} already cloned, pulling latest`,
       );
       await this.pullLatestSafely(repositoryPath);
       return;
@@ -142,8 +139,7 @@ export class WorkspaceManager implements OnModuleInit {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(
-        { path: repositoryPath, error: message },
-        "failed to pull latest, continuing with existing state"
+        `failed to pull latest for ${repositoryPath}: ${message}, continuing with existing state`,
       );
     }
   }

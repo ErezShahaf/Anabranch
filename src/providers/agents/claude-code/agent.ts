@@ -1,5 +1,5 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
-import type pino from "pino";
+import type { Logger } from "@nestjs/common";
 import type { Ticket } from "../../ticketing/types.js";
 import type { AssessmentResult } from "../../../core/orchestrator/types.js";
 import type { AgentResult } from "../types.js";
@@ -16,12 +16,12 @@ import { validateAssessmentResult } from "../../../core/orchestrator/assessment-
 export class ClaudeCodeAgent extends CodingAgent {
   readonly name = "claude-code";
   private readonly anthropicService: AnthropicService;
-  private readonly logger: pino.Logger;
+  private readonly logger: Logger;
 
-  constructor(anthropicService: AnthropicService, logger: pino.Logger) {
+  constructor(anthropicService: AnthropicService, logger: Logger) {
     super();
     this.anthropicService = anthropicService;
-    this.logger = logger.child({ component: "claude-code-agent" });
+    this.logger = logger;
   }
 
   async healthCheck(): Promise<boolean> {
@@ -34,10 +34,7 @@ export class ClaudeCodeAgent extends CodingAgent {
   ): Promise<AssessmentResult> {
     const prompt = buildAssessmentPrompt(ticket, repositories);
 
-    this.logger.info(
-      { ticketId: ticket.externalId },
-      "running assessment with Claude Code"
-    );
+    this.logger.log(`running assessment with Claude Code for ${ticket.externalId}`);
 
     const result = query({
       prompt,
@@ -70,14 +67,8 @@ export class ClaudeCodeAgent extends CodingAgent {
 
     const assessmentData = validateAssessmentResult(rawAssessment);
 
-    this.logger.info(
-      {
-        ticketId: ticket.externalId,
-        confidence: assessmentData.confidence,
-        scope: assessmentData.scope,
-        costInDollars: totalCost,
-      },
-      "assessment complete"
+    this.logger.log(
+      `assessment complete for ${ticket.externalId} (confidence: ${assessmentData.confidence}, scope: ${assessmentData.scope})`,
     );
 
     return assessmentData;
@@ -91,13 +82,7 @@ export class ClaudeCodeAgent extends CodingAgent {
   ): Promise<AgentResult> {
     const prompt = buildExecutionPrompt(ticket, assessment, workDirectories);
 
-    this.logger.info(
-      {
-        ticketId: ticket.externalId,
-        workDirectories,
-      },
-      "running execution with Claude Code"
-    );
+    this.logger.log(`running execution with Claude Code for ${ticket.externalId}`);
 
 
     const result = query({
@@ -126,14 +111,7 @@ export class ClaudeCodeAgent extends CodingAgent {
       }
     }
 
-    this.logger.info(
-      {
-        ticketId: ticket.externalId,
-        success,
-        costInDollars: totalCost,
-      },
-      "execution complete"
-    );
+    this.logger.log(`execution complete for ${ticket.externalId} (success: ${success})`);
 
     return {
       success,

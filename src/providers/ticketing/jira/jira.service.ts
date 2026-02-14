@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { Inject, Injectable, NotImplementedException } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
+import { Logger } from "@nestjs/common";
 import type {
   Ticket,
   TicketEvent,
@@ -18,10 +18,11 @@ export class JiraService extends TicketProvider {
   private readonly webhookSecret: string;
   private readonly filters: TicketFilterConfiguration;
 
+  private readonly logger = new Logger(JiraService.name);
+
   constructor(
     configService: ConfigurationService,
     @Inject(TASK_QUEUE) private readonly taskQueue: TaskQueue,
-    private readonly logger: PinoLogger,
   ) {
     super();
     const config = configService.config.ticketing.jira;
@@ -39,9 +40,8 @@ export class JiraService extends TicketProvider {
       return;
     }
 
-    this.logger.info(
-      { ticketId: event.ticket.externalId, title: event.ticket.title },
-      "accepted new ticket from Jira",
+    this.logger.log(
+      `accepted new ticket from Jira: ${event.ticket.externalId } - ${event.ticket.title}`,
     );
 
     const task = {
@@ -60,7 +60,7 @@ export class JiraService extends TicketProvider {
       await this.taskQueue.enqueue(task);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error({ error: message }, "failed to enqueue task");
+      this.logger.error(`failed to enqueue task: ${message}`);
     }
   }
 
@@ -82,8 +82,7 @@ export class JiraService extends TicketProvider {
   protected parseWebhookPayload(body: JiraWebhookPayload): TicketEvent | null {
     if (body.webhookEvent !== "jira:issue_created") {
       this.logger.debug(
-        { event: body.webhookEvent },
-        "ignoring non-creation Jira event",
+        `ignoring non-creation Jira event: ${body.webhookEvent}`,
       );
       return null;
     }

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import type pino from "pino";
+import type { Logger } from "@nestjs/common";
 import type { Ticket } from "../../ticketing/types.js";
 import type { AssessmentResult } from "../../../core/orchestrator/types.js";
 import type { AgentResult } from "../types.js";
@@ -21,11 +21,11 @@ interface CursorJsonResult {
 
 export class CursorAgent extends CodingAgent {
   readonly name = "cursor";
-  private readonly logger: pino.Logger;
+  private readonly logger: Logger;
 
-  constructor(logger: pino.Logger, private readonly apiKey: string) {
+  constructor(logger: Logger, private readonly apiKey: string) {
     super();
-    this.logger = logger.child({ component: "cursor-agent" });
+    this.logger = logger;
   }
 
   async healthCheck(): Promise<boolean> {
@@ -43,10 +43,7 @@ export class CursorAgent extends CodingAgent {
   ): Promise<AssessmentResult> {
     const prompt = buildAssessmentPrompt(ticket, repositories);
 
-    this.logger.info(
-      { ticketId: ticket.externalId },
-      "running assessment with Cursor CLI"
-    );
+    this.logger.log(`running assessment with Cursor CLI for ${ticket.externalId}`);
 
     const output = await this.runCursorCommand(
       ["-p", "--output-format", "json", prompt],
@@ -61,13 +58,8 @@ export class CursorAgent extends CodingAgent {
     const rawAssessment = this.parseAssessmentFromText(parsed.result);
     const assessment = validateAssessmentResult(rawAssessment);
 
-    this.logger.info(
-      {
-        ticketId: ticket.externalId,
-        confidence: assessment.confidence,
-        scope: assessment.scope,
-      },
-      "assessment complete"
+    this.logger.log(
+      `assessment complete for ${ticket.externalId} (confidence: ${assessment.confidence}, scope: ${assessment.scope})`,
     );
 
     return assessment;
@@ -80,10 +72,7 @@ export class CursorAgent extends CodingAgent {
   ): Promise<AgentResult> {
     const prompt = buildExecutionPrompt(ticket, assessment, workDirectories);
 
-    this.logger.info(
-      { ticketId: ticket.externalId, workDirectories },
-      "running execution with Cursor CLI"
-    );
+    this.logger.log(`running execution with Cursor CLI for ${ticket.externalId}`);
 
     const output = await this.runCursorCommand(
       ["-p", "--force", "--output-format", "json", prompt],
@@ -97,10 +86,7 @@ export class CursorAgent extends CodingAgent {
       throw new Error("Cursor CLI execution response missing result field");
     }
 
-    this.logger.info(
-      { ticketId: ticket.externalId, success },
-      "execution complete"
-    );
+    this.logger.log(`execution complete for ${ticket.externalId} (success: ${success})`);
 
     return {
       success,
