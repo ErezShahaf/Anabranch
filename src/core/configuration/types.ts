@@ -31,7 +31,7 @@ export interface TicketingConfiguration {
 
 export interface GitHubSourceControlConfiguration {
   appId: string;
-  privateKeyPath: string;
+  privateKey: string;
   installationId: string;
   baseBranch: string;
 }

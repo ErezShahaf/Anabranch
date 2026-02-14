@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { Octokit } from "@octokit/rest";
@@ -34,7 +33,7 @@ export class GitHubProvider extends SourceControlProvider {
     this.configuration = configuration;
     this.logger = logger.child({ component: "github-provider" });
 
-    const privateKey = readFileSync(configuration.privateKeyPath, "utf-8");
+    const privateKey = configuration.privateKey.replace(/\\n/g, "\n");
 
     this.octokit = new Octokit({
       authStrategy: createAppAuth,

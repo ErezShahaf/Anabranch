@@ -41,7 +41,7 @@ ticketing:
 sourceControl:
   github:
     appId: ${GITHUB_APP_ID}
-    privateKeyPath: /secrets/github-app-private-key.pem
+    privateKey: ${GITHUB_APP_PRIVATE_KEY}
     installationId: ${GITHUB_APP_INSTALLATION_ID}
     # Default base branch for pull requests (repos can override via their own default branch)
     baseBranch: main

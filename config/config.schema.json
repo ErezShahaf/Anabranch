@@ -73,10 +73,10 @@
       "properties": {
         "github": {
           "type": "object",
-          "required": ["appId", "privateKeyPath", "installationId", "baseBranch"],
+          "required": ["appId", "privateKey", "installationId", "baseBranch"],
           "properties": {
             "appId": { "type": "string" },
-            "privateKeyPath": { "type": "string" },
+            "privateKey": { "type": "string" },
             "installationId": { "type": "string" },
             "baseBranch": { "type": "string" }
           }

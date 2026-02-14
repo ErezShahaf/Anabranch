@@ -34,7 +34,7 @@ Required permissions:
 
 After creating the app:
 - Note the **App ID**
-- Generate and download a **private key** (`.pem` file)
+- Generate and download a **private key** (`.pem` file) — paste its contents into `GITHUB_APP_PRIVATE_KEY`
 - Install the app on your organisation and note the **Installation ID**
 
 ### 2. Configure Jira webhooks
@@ -54,7 +54,7 @@ cp .env.example .env
 # Edit .env with your actual values
 ```
 
-Place your GitHub App private key at `secrets/github-app-private-key.pem` (or change the path in `config/default.yaml`).
+Set `GITHUB_APP_PRIVATE_KEY` to your GitHub App private key PEM content (use `\n` for newlines if stored as a single line).
 
 ### 4. Configure
 
