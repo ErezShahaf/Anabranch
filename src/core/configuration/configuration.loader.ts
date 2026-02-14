@@ -7,17 +7,31 @@ import type { ApplicationConfiguration } from "./types.js";
 
 const ENVIRONMENT_VARIABLE_PATTERN = /\$\{(\w+)\}/g;
 
-function substituteEnvironmentVariables(text: string): string {
-  return text.replace(ENVIRONMENT_VARIABLE_PATTERN, (_match, variableName: string) => {
-    const value = process.env[variableName];
-    if (value === undefined) {
-      // throw new Error(
-      //   `Environment variable "${variableName}" is referenced in configuration but is not set.`
-      // );
+function substituteInString(value: string): string {
+  return value.replace(ENVIRONMENT_VARIABLE_PATTERN, (_match, variableName: string) => {
+    const envValue = process.env[variableName];
+    if (envValue === undefined) {
       return "temporary-value";
     }
-    return value;
+    return envValue;
   });
+}
+
+function substituteEnvironmentVariablesInObject(obj: unknown): unknown {
+  if (typeof obj === "string") {
+    return substituteInString(obj);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(substituteEnvironmentVariablesInObject);
+  }
+  if (obj !== null && typeof obj === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = substituteEnvironmentVariablesInObject(value);
+    }
+    return result;
+  }
+  return obj;
 }
 
 function findConfigurationFilePath(): string {
@@ -69,8 +83,8 @@ function validateWithSchema(data: unknown): ApplicationConfiguration {
 export function loadConfiguration(): ApplicationConfiguration {
   const filePath = findConfigurationFilePath();
   const rawContent = readFileSync(filePath, "utf-8");
-  const withEnvironmentVariables = substituteEnvironmentVariables(rawContent);
-  const parsed = parseYaml(withEnvironmentVariables) as unknown;
+  const parsed = parseYaml(rawContent) as unknown;
+  const withEnvironmentVariables = substituteEnvironmentVariablesInObject(parsed);
 
-  return validateWithSchema(parsed);
+  return validateWithSchema(withEnvironmentVariables);
 }
