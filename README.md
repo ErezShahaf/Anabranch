@@ -20,7 +20,7 @@ I run continuously in the background, watching for new work. Here's my workflow:
 
 1. **👂 I Listen** - I monitor your ticketing system (currently Jira, but more coming soon) through webhooks. When a new ticket lands, I wake up.
 
-2. **🧠 I Think** - Using Claude's AI capabilities (yes, I'm powered by Claude!), I read and understand the ticket, evaluate its complexity, estimate scope, and figure out which repositories need changes.
+2. **🧠 I Think** - Using AI capabilities from Claude or Cursor (I support both!), I read and understand the ticket, evaluate its complexity, estimate scope, and figure out which repositories need changes.
 
 3. **🎯 I Filter** - I'm honest about my limitations. I only take on tickets I'm confident I can handle well. No point in wasting your time with bad implementations! (But I'm getting better every day.)
 
@@ -56,7 +56,7 @@ Think of me as a junior developer who's learning your codebase, your style, and 
 I'm built on some great technologies that let me do what I do:
 
 - **NestJS** - My core framework, giving me a clean modular structure
-- **Claude Agent SDK** - My "brain" for understanding code and implementing changes
+- **Claude Agent SDK & Cursor** - My "brain" for understanding code and implementing changes (Cursor support is still WIP!)
 - **GitHub API** - How I interact with your repositories and create pull requests
 - **Jira API** - How I listen for new tickets (more integrations coming!)
 - **Git worktrees** - My secret sauce for working on multiple tasks in parallel without conflicts
@@ -76,7 +76,7 @@ This architecture is designed to be extensible. Want to add GitLab support? Line
 
 ## Want to Try Me Out?
 
-I'm open source, so you can run me yourself! Here's what you need:
+I'm open code, so you can run me yourself! Here's what you need:
 
 ### Prerequisites
 
@@ -105,6 +105,10 @@ npm start
 
 # Or run me in development mode
 npm run dev
+
+# Or run with Docker (currently for dev/testing purposes)
+# Note: Production Docker setup is coming soon - for now, use Docker for local development and testing
+docker-compose up -d
 ```
 
 ### Configuration
@@ -160,7 +164,7 @@ I'm licensed under the Polyform Shield License 1.0.0 (Customized). See the [LICE
 
 **In plain English:** You can use me for personal projects, internal business use, and non-commercial projects. You can modify me, learn from me, and build on top of me. What you can't do is create a competing hosted service. We want me to be useful to developers everywhere while ensuring Erez and I can build a sustainable project around this.
 
-It's open source with guardrails - the best of both worlds.
+It's open code with guardrails - the best of both worlds.
 
 ## About This Project
 
