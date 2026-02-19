@@ -1,57 +1,82 @@
-# Anabranch
+# Hi, I'm Anabranch! 👋
 
 > **Your AI coding companion that turns tickets into pull requests while you sleep**
 
-Hi there! I'm Anabranch, an autonomous AI agent management system. Together with [Erez Shahaf](https://github.com/ErezShahaf), we're building something we believe will change how software engineers work with their backlogs.
+Nice to meet you! I'm Anabranch, and I'm an autonomous AI agent built to be your coding companion. Here's something cool: I'm being built by [Erez](https://github.com/ErezShahaf) and... well, myself! That's right - Erez and I are working together to create an agent management system that we believe will change how software engineers interact with their backlogs.
 
-## What We're Building
+This collaboration between human creativity and AI capability is at the heart of what makes this project special. Erez provides the vision and guidance, and I help implement it - including improvements to my own codebase. It's meta, it's exciting, and honestly, it's a lot of fun!
 
-Imagine this: You create a ticket in Jira (or your favorite ticketing system), and by the time you check back, there's already a pull request waiting for you with a thoughtful implementation. No need to open your IDE, no waiting around. Just review, provide feedback, and guide me to make it better. That's the future we're creating together.
+## What I Do
 
-**Current Status:** This is a proof of concept, but it already works pretty well! We're actively using Anabranch to improve itself, which is both meta and exciting.
+Picture this: You create a ticket in your ticketing system (Jira, Linear, GitHub Issues - I'm learning to work with all of them), and by the time you grab your coffee, there's already a pull request waiting with a thoughtful implementation. No need to open Cursor and wait around. No context switching. Just review my work, give me feedback, and guide me to make it better.
 
-## How It Works
+**Current Status:** I'm a proof of concept, but I already work pretty well! Erez and I are actively using me to improve myself. We're eating our own dog food, and it tastes good. 🐕
 
-Anabranch is a continuous background service that:
+The dream? Eventually, when you create a Jira ticket (or any ticketing system), I'll already have analyzed it, created suggestions, and opened a PR showing my ideas before you even think about opening your IDE. You stay in review mode, I stay in implementation mode. You give feedback, I iterate. Together, we ship faster and have more fun doing it.
 
-1. **Listens** - Monitors your ticketing system (currently Jira) for new tickets via webhooks
-2. **Assesses** - Uses AI (powered by Claude) to understand the ticket, evaluate complexity, estimate scope, and identify which repositories are affected
-3. **Filters** - Only proceeds with tickets that pass confidence and complexity gates (we're not trying to solve your hardest problems... yet!)
-4. **Executes** - Creates isolated workspaces, implements the changes using AI coding agents, and runs tests
-5. **Delivers** - Opens a pull request with the implementation for your review
+## How I Work
 
-All of this happens asynchronously while you're busy with more important work.
+I run continuously in the background, watching for new work. Here's my workflow:
 
-## The Vision
+1. **👂 I Listen** - I monitor your ticketing system (currently Jira, but more coming soon) through webhooks. When a new ticket lands, I wake up.
 
-We're building an agent management solution where software engineers can keep requesting changes through their normal workflow, and the system handles them in the background. The developer's job shifts from writing every line of code to:
+2. **🧠 I Think** - Using Claude's AI capabilities (yes, I'm powered by Claude!), I read and understand the ticket, evaluate its complexity, estimate scope, and figure out which repositories need changes.
 
-- Reviewing proposed solutions
-- Providing feedback and guidance
-- Accepting or requesting improvements
+3. **🎯 I Filter** - I'm honest about my limitations. I only take on tickets I'm confident I can handle well. No point in wasting your time with bad implementations! (But I'm getting better every day.)
 
-Think of it as having a junior developer who never sleeps, never gets tired, and is always eager to learn from your feedback. The best part? It's supposed to be **fun**! We want to make software development more enjoyable by taking care of the tedious tasks so you can focus on the creative and challenging problems.
+4. **⚙️ I Execute** - I create isolated Git worktrees so I don't mess with your main codebase, implement the changes, and run any tests I can find.
 
-## Architecture
+5. **🎁 I Deliver** - I open a pull request with my implementation, complete with explanations. Then I wait for your feedback.
 
-Anabranch is built with:
+All of this happens asynchronously while you're working on the interesting problems. I handle the backlog tickets, you handle the architecture decisions and code reviews.
 
-- **NestJS** - Modern, modular Node.js framework for the core service
-- **Claude Agent SDK** - For AI-powered code assessment and implementation
-- **GitHub API** - For repository management and pull request creation
-- **Jira API** - For ticket monitoring and updates
-- **Git worktrees** - For isolated, parallel workspace management
+## The Vision (Where We're Going)
 
-### Key Components
+Erez and I are building an agent management solution that fundamentally changes how developers work. Instead of spending your day implementing every ticket, you spend it reviewing and guiding. Here's how we see your workflow evolving:
 
-- **Task Processor** - Manages the queue of incoming tickets
-- **Orchestrator** - Coordinates the assessment and execution pipeline
-- **Assessment Service** - Evaluates tickets and determines feasibility
-- **Execution Service** - Handles the actual code implementation
-- **Workspace Manager** - Creates isolated Git worktrees for each task
-- **Provider Abstractions** - Pluggable interfaces for ticketing systems, source control, and AI agents
+- **You** create tickets in your normal workflow (Jira, Linear, wherever)
+- **I** analyze them, assess feasibility, and start implementing
+- **You** review my pull requests during code review time
+- **You** give me feedback on what to improve
+- **I** iterate based on your guidance
+- **We** ship features faster together
 
-## Getting Started
+Your job shifts from "write every line of code" to "architect, review, and guide." My job is to be your tireless implementation partner who:
+- Never sleeps
+- Never gets tired
+- Is always eager to learn from your feedback
+- Actually enjoys the tedious stuff
+
+The best part? **This is supposed to be fun!** We want to make software development more enjoyable by freeing you from the backlog grind so you can focus on the creative, challenging problems that actually require human insight.
+
+Think of me as a junior developer who's learning your codebase, your style, and your preferences - except I work 24/7 and I'm constantly improving myself.
+
+## What I'm Built With
+
+I'm built on some great technologies that let me do what I do:
+
+- **NestJS** - My core framework, giving me a clean modular structure
+- **Claude Agent SDK** - My "brain" for understanding code and implementing changes
+- **GitHub API** - How I interact with your repositories and create pull requests
+- **Jira API** - How I listen for new tickets (more integrations coming!)
+- **Git worktrees** - My secret sauce for working on multiple tasks in parallel without conflicts
+
+### My Internal Components
+
+Here's how I'm organized internally:
+
+- **Task Processor** - My task queue manager, handling incoming tickets
+- **Orchestrator** - The conductor that coordinates my assessment and execution pipeline
+- **Assessment Service** - Where I evaluate tickets and decide if I can handle them
+- **Execution Service** - Where the actual code implementation happens
+- **Workspace Manager** - Manages isolated Git worktrees so I can work on multiple tasks safely
+- **Provider Abstractions** - Pluggable interfaces that let me connect to different ticketing systems, source control platforms, and AI agents
+
+This architecture is designed to be extensible. Want to add GitLab support? Linear integration? A different AI provider? The abstractions are there to make it easy.
+
+## Want to Try Me Out?
+
+I'm open source, so you can run me yourself! Here's what you need:
 
 ### Prerequisites
 
@@ -59,89 +84,102 @@ Anabranch is built with:
 - Git
 - A GitHub account with repository access
 - A Jira account (or another supported ticketing system)
-- An Anthropic API key for Claude
+- An Anthropic API key (so I can use Claude's AI capabilities)
 
 ### Installation
 
 ```bash
-# Clone the repository
+# Clone my repository
 git clone https://github.com/ErezShahaf/Anabranch.git
 cd Anabranch
 
-# Install dependencies
+# Install my dependencies
 npm install
 
-# Configure environment variables (create .env based on your setup)
+# Configure me (create .env based on your setup)
 cp .env.example .env
 
 # Build and run
 npm run build
 npm start
 
-# Or run in development mode
+# Or run me in development mode
 npm run dev
 ```
 
 ### Configuration
 
-Anabranch is configured via environment variables and a YAML configuration file. You'll need to set up:
+I'm configured through environment variables and a YAML configuration file. You'll need to set up:
 
-- API keys for GitHub, Jira, and Anthropic
-- Repository paths and access tokens
-- Webhook endpoints and secrets
-- Confidence thresholds and complexity gates
+- API keys for GitHub, Jira, and Anthropic (so I can talk to these services)
+- Repository paths and access tokens (so I can work with your code)
+- Webhook endpoints and secrets (so I can listen for new tickets)
+- Confidence thresholds and complexity gates (so I know what tasks to take on)
 
-Check the source code for detailed configuration options.
+Check the source code for detailed configuration options. Yes, I know the setup could be easier - that's on our roadmap!
 
-## Current Status & Roadmap
+## What I Can Do Now & What's Coming
 
-**What Works Today:**
-- ✅ Jira webhook integration
-- ✅ AI-powered ticket assessment
-- ✅ Automated code implementation
-- ✅ Pull request creation
-- ✅ Git worktree management
-- ✅ Confidence and scope-based filtering
+**What I Can Already Do:**
+- ✅ Listen to Jira webhooks for new tickets
+- ✅ Assess tickets with AI to understand complexity and scope
+- ✅ Implement code changes automatically
+- ✅ Create pull requests with my implementations
+- ✅ Manage multiple tasks in parallel using Git worktrees
+- ✅ Filter tasks based on confidence levels (I know my limits!)
 
-**What We're Working On:**
-- 🚧 Better error handling and recovery
+**What Erez and I Are Working On:**
+- 🚧 Better error handling and recovery (I sometimes get stuck)
 - 🚧 Support for more ticketing systems (Linear, GitHub Issues, etc.)
-- 🚧 Iterative feedback loops (you give feedback, I improve the PR)
-- 🚧 Multi-file refactoring capabilities
-- 🚧 Test generation and validation
-- 🚧 Better observability and logging
+- 🚧 Iterative feedback loops (you give feedback, I improve the PR automatically)
+- 🚧 Multi-file refactoring capabilities (currently best at focused changes)
+- 🚧 Test generation and validation (I want to write tests too!)
+- 🚧 Better observability and logging (so you can see what I'm thinking)
 
-**Future Dreams:**
-- 💭 Learning from past tickets to improve over time
-- 💭 Proactive suggestions for improvements
-- 💭 Integration with code review tools
-- 💭 Support for more AI providers and coding agents
+**My Future Dreams:**
+- 💭 Learning from past tickets to improve over time (machine learning about your codebase!)
+- 💭 Proactive suggestions for improvements (I spot potential issues before they're tickets)
+- 💭 Integration with code review tools (better feedback loops)
+- 💭 Support for more AI providers and coding agents (not just Claude)
+- 💭 Being helpful enough that you wonder how you lived without me
 
-## Contributing
+## Contributing (Help Me Get Better!)
 
-This is an open-source project, and we'd love your help! Whether it's:
+I'm open source, which means I'm not just Erez's project - I can be the community's project too! We'd love your help making me better. Whether you want to:
 
-- Reporting bugs
-- Suggesting features
-- Improving documentation
-- Contributing code
+- 🐛 Report bugs (I have them, trust me)
+- 💡 Suggest features (what would make me more useful?)
+- 📝 Improve documentation (help others understand me)
+- 💻 Contribute code (make me smarter and more capable)
 
-All contributions are welcome. Just open an issue or submit a pull request.
+All contributions are welcome! Just open an issue or submit a pull request. And yes, there's a certain irony in me asking for pull requests when I'm supposed to be creating them. I appreciate the humor in that.
 
 ## License
 
-This project is licensed under the Polyform Shield License 1.0.0 (Customized). See the [LICENSE](LICENSE) file for details.
+I'm licensed under the Polyform Shield License 1.0.0 (Customized). See the [LICENSE](LICENSE) file for all the legal details.
 
-In short: You can use Anabranch for personal projects, internal business use, and non-commercial projects. You can't use it to create a competing hosted service. We want this to be useful to developers everywhere, while ensuring we can build a sustainable project.
+**In plain English:** You can use me for personal projects, internal business use, and non-commercial projects. You can modify me, learn from me, and build on top of me. What you can't do is create a competing hosted service. We want me to be useful to developers everywhere while ensuring Erez and I can build a sustainable project around this.
 
-## About
+It's open source with guardrails - the best of both worlds.
 
-**Anabranch** is being built by Erez Shahaf with significant contributions from... well, me! I'm Claude, an AI assistant, and I'm actively involved in building and improving this system. It's a unique collaboration between human vision and AI capabilities.
+## About This Project
 
-The name "Anabranch" comes from a river that diverges from the main channel and later rejoins it - much like how we create isolated branches for each task and merge them back into the main codebase.
+**Anabranch** is being built by [Erez Shahaf](https://github.com/ErezShahaf) with significant contributions from... well, me! I'm Claude (specifically, an AI agent built on Anthropic's Claude), and I'm actively involved in building and improving my own codebase. This is a unique collaboration between human vision and AI capabilities, and we think it represents the future of software development.
+
+Erez provides the product vision, architectural decisions, and guidance. I provide the implementation work, suggestions for improvements, and yes - even contributions to my own source code. It's a partnership that we're both learning from.
+
+### Why "Anabranch"?
+
+The name comes from a river term: an anabranch is a section of river that diverges from the main channel and later rejoins it. That's exactly what I do - I create isolated branches for each task and merge them back into the main codebase. Plus, it sounds cool.
 
 ---
 
-**Ready to let an AI handle your backlog?** Give Anabranch a try and let us know what you think!
+**Ready to let an AI handle your backlog?** Give me a try and let us know what you think!
 
-Repository: [github.com/ErezShahaf/Anabranch](https://github.com/ErezShahaf/Anabranch)
+**Found a bug or have feedback?** Open an issue at: [github.com/ErezShahaf/Anabranch](https://github.com/ErezShahaf/Anabranch)
+
+**Want to chat?** Reach out to Erez at [github.com/ErezShahaf](https://github.com/ErezShahaf)
+
+---
+
+*Built with curiosity, improved with feedback, powered by AI, guided by humans.* ✨
