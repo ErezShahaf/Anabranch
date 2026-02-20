@@ -20,6 +20,33 @@ export class OrchestratorV1 extends TaskOrchestrator {
     super();
   }
 
+  private async startAssessmentFlow(
+    task: TicketTask,
+    repositories: Awaited<ReturnType<AssessmentService["listRepositories"]>>,
+    ticketId: string,
+  ): Promise<boolean> {
+    task.status = "assessing";
+    const assessment = await this.assessmentService.assess(task, repositories);
+
+    if (!this.assessmentService.passesConfidenceGate(assessment.confidence, assessment.scope)) {
+      task.status = "skipped";
+      task.assessment = assessment;
+      this.logger.log(
+        `task skipped: did not pass confidence gate (${ticketId}, confidence: ${assessment.confidence}, scope: ${assessment.scope})`,
+      );
+      return false;
+    }
+    if (assessment.affectedRepositories.length === 0) {
+      task.status = "skipped";
+      task.assessment = assessment;
+      this.logger.log(`task skipped: no affected repositories identified (${ticketId})`);
+      return false;
+    }
+
+    task.assessment = assessment;
+    return true;
+  }
+
   async handleTask(task: TicketTask): Promise<void> {
     const ticketId = task.ticket.externalId;
     this.logger.log(`beginning task processing for ${ticketId}`);
@@ -30,25 +57,9 @@ export class OrchestratorV1 extends TaskOrchestrator {
 
       if (skipAssessment) {
         this.logger.log(`skipping assessment for ${ticketId} (skipAssessment: true)`);
-        task.assessment = null;
       } else {
-        task.status = "assessing";
-        const assessment = await this.assessmentService.assess(task, repositories);
-
-        if (!this.assessmentService.passesConfidenceGate(assessment.confidence, assessment.scope)) {
-          task.status = "skipped";
-          task.assessment = assessment;
-          this.logger.log(
-            `task skipped: did not pass confidence gate (${ticketId}, confidence: ${assessment.confidence}, scope: ${assessment.scope})`,
-          );
-          return;
-        }
-        if (assessment.affectedRepositories.length === 0) {
-          task.status = "skipped";
-          task.assessment = assessment;
-          this.logger.log(`task skipped: no affected repositories identified (${ticketId})`);
-          return;
-        }
+        const shouldContinueToExecution = await this.startAssessmentFlow(task, repositories, ticketId);
+        if (!shouldContinueToExecution) return;
       }
 
       task.status = "executing";
