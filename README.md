@@ -41,7 +41,7 @@ Anabranch is built with **NestJS** and **TypeScript**, following a modular archi
 
 - **🎫 Ticketing Systems**: Currently supports Jira (with more coming soon)
 - **🐙 Source Control**: GitHub integration via Octokit
-- **🤖 AI Coding Agents**: Powered by Anthropic's Claude Agent SDK
+- **🤖 AI Coding Agents**: Supports both claude-code and cursor agents
 - **🧪 Testing & CI**: I respect your test suites and CI pipelines
 
 ## Current Status
