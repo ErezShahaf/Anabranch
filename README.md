@@ -158,14 +158,14 @@ MIIEpAIBAAKCAQEA...
      - ✅ `updated` (when issues are updated, e.g., status changes)
    - You can also select other events based on your needs
 
-5. **Secret**: Create a random secret token (e.g., use a password generator). This is your `JIRA_WEBHOOK_SECRET`.
+5. **Secret**: Get your webhook secret token from jira.
 
 #### Add to .env
 
 Update your `.env` file:
 
 ```bash
-JIRA_WEBHOOK_SECRET=your-random-secret-token-here
+JIRA_WEBHOOK_SECRET=your-secret-token-here
 ```
 
 #### Configure Jira Filters (Optional)
