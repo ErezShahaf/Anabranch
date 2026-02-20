@@ -4,7 +4,14 @@ import type { AssessedTicketTask } from "../queue/types.js";
 import type { Repository, PullRequest } from "../../providers/source-control/types.js";
 import type { SourceControlProvider } from "../../providers/source-control/base.js";
 import { SOURCE_CONTROL_PROVIDER } from "../../providers/source-control/tokens.js";
-import { WorkspaceManager } from "../../workspace/manager.js";
+import type { WorkspaceManager } from "../../workspace/manager.js";
+import { WORKSPACE_MANAGER } from "../../workspace/tokens.js";
+
+function getWorktreePath(worktreePaths: Map<string, string>, repoFullName: string): string {
+  const path = worktreePaths.get(repoFullName);
+  if (!path) throw new Error(`No worktree path for ${repoFullName}`);
+  return path;
+}
 
 @Injectable()
 export class PullRequestService {
@@ -12,7 +19,6 @@ export class PullRequestService {
 
   constructor(
     @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
-    private readonly workspaceManager: WorkspaceManager,
   ) {}
 
   async createPullRequestsForRepositories(
@@ -25,17 +31,9 @@ export class PullRequestService {
     const createdPullRequests: PullRequest[] = [];
 
     for (const repository of repositories) {
-      const worktreePath = worktreePaths.get(repository.fullName)!;
-      const hasChanges = await this.workspaceManager.hasBranchDiverged(
-        worktreePath,
-        repository.defaultBranch,
-      );
+      const worktreePath = getWorktreePath(worktreePaths, repository.fullName);
 
-      if (!hasChanges) {
-        continue;
-      }
-
-      await this.sourceControl.pushBranch(worktreePath, branchName);
+      await this.sourceControl.pushBranch(worktreePath, branchName, repository);
 
       const [owner, repositoryName] = repository.fullName.split("/") as [string, string];
       const pullRequest = await this.sourceControl.createPullRequest({

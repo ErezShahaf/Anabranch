@@ -18,7 +18,8 @@ export abstract class SourceControlProvider {
 
   abstract pushBranch(
     repositoryPath: string,
-    branchName: string
+    branchName: string,
+    repository: Repository
   ): Promise<void>;
 
   abstract createPullRequest(

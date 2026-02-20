@@ -11,6 +11,10 @@ export class AnthropicService {
     this.baseUrl = baseUrl;
   }
 
+  getApiKey(): string {
+    return this.apiKey;
+  }
+
   async healthCheck(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/v1/messages`, {

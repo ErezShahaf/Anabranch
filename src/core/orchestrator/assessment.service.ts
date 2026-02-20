@@ -7,7 +7,8 @@ import type { CodingAgent } from "../../providers/agents/base.js";
 import type { SourceControlProvider } from "../../providers/source-control/base.js";
 import { CODING_AGENT } from "../../providers/agents/tokens.js";
 import { SOURCE_CONTROL_PROVIDER } from "../../providers/source-control/tokens.js";
-import { ConfigurationService } from "../configuration/configuration.service.js";
+import type { ConfigurationService } from "../configuration/configuration.service.js";
+import { CONFIGURATION_SERVICE } from "../configuration/tokens.js";
 
 const SCOPE_SEVERITY_ORDER: TaskScope[] = [
   "trivial",
@@ -24,7 +25,7 @@ export class AssessmentService {
   constructor(
     @Inject(CODING_AGENT) private readonly codingAgent: CodingAgent,
     @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
-    private readonly configService: ConfigurationService,
+    @Inject(CONFIGURATION_SERVICE) private readonly configService: ConfigurationService,
   ) {}
 
   async listRepositories(): Promise<Repository[]> {

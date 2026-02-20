@@ -14,10 +14,13 @@ import { ConfigurationService } from "../../core/configuration/configuration.ser
       useFactory: (configService: ConfigurationService): CodingAgent => {
         switch (configService.config.agent.provider) {
           case "claude-code": {
-            const anthropic = new AnthropicService(
-              configService.config.agent.apiKey,
+            const apiKey = configService.config.agent.apiKey;
+            const anthropic = new AnthropicService(apiKey);
+            return new ClaudeCodeAgent(
+              apiKey,
+              anthropic,
+              new Logger("ClaudeCodeAgent"),
             );
-            return new ClaudeCodeAgent(anthropic, new Logger("ClaudeCodeAgent"));
           }
           case "cursor":
             return new CursorAgent(

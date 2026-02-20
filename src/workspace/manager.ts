@@ -11,6 +11,9 @@ import { ConfigurationService } from "../core/configuration/configuration.servic
 
 const execFileAsync = promisify(execFile);
 
+const WORKTREE_ADD_TIMEOUT_MS = 60_000; // 1 minute
+const WORKTREE_REMOVE_TIMEOUT_MS = 30_000; // 30 seconds
+
 @Injectable()
 export class WorkspaceManager implements OnModuleInit {
   private readonly basePath: string;
@@ -47,22 +50,30 @@ export class WorkspaceManager implements OnModuleInit {
     this.logger.log("workspace initialization complete");
   }
 
-  async prepareWorkspace(
+  async ensureCleanWorktree(
     repository: Repository,
     ticketId: string
-  ): Promise<string> {
-    const repositoryPath = this.repositoryPath(repository);
-    await this.pullLatestSafely(repositoryPath);
-
-    const branchName = `anabranch/${ticketId}`;
+  ): Promise<void> {
     const worktreePath = this.worktreePath(repository, ticketId);
-
     if (existsSync(worktreePath)) {
       this.logger.warn(
         `worktree already exists for ${repository.fullName}, removing before re-creating`,
       );
       await this.cleanupWorkspace(worktreePath);
     }
+  }
+
+  async prepareWorkspace(
+    repository: Repository,
+    ticketId: string
+  ): Promise<string> {
+    await this.ensureCleanWorktree(repository, ticketId);
+
+    const repositoryPath = this.repositoryPath(repository);
+    await this.pullLatestSafely(repositoryPath);
+
+    const branchName = `anabranch/${ticketId}`;
+    const worktreePath = this.worktreePath(repository, ticketId);
 
     await execFileAsync(
       "git",
@@ -74,7 +85,7 @@ export class WorkspaceManager implements OnModuleInit {
         worktreePath,
         repository.defaultBranch,
       ],
-      { cwd: repositoryPath, timeout: 60_000 }
+      { cwd: repositoryPath, timeout: WORKTREE_ADD_TIMEOUT_MS }
     );
 
     this.logger.log(
@@ -90,7 +101,7 @@ export class WorkspaceManager implements OnModuleInit {
     await execFileAsync(
       "git",
       ["worktree", "remove", worktreePath, "--force"],
-      { cwd: parentRepositoryPath, timeout: 30_000 }
+      { cwd: parentRepositoryPath, timeout: WORKTREE_REMOVE_TIMEOUT_MS }
     );
 
     this.logger.debug(`worktree removed: ${worktreePath}`);
@@ -106,6 +117,19 @@ export class WorkspaceManager implements OnModuleInit {
     return result.stdout.trim().length > 0;
   }
 
+  async commitChanges(
+    worktreePath: string,
+    message: string
+  ): Promise<void> {
+    await execFileAsync("git", ["add", "-A"], { cwd: worktreePath });
+    await execFileAsync(
+      "git",
+      ["-c", "user.name=Anabranch", "-c", "user.email=anabranch@local", "commit", "-m", message],
+      { cwd: worktreePath }
+    );
+    this.logger.debug(`committed changes in ${worktreePath}`);
+  }
+
   async hasBranchDiverged(worktreePath: string, baseBranch: string): Promise<boolean> {
     const result = await execFileAsync(
       "git",
@@ -114,6 +138,36 @@ export class WorkspaceManager implements OnModuleInit {
     );
 
     return result.stdout.trim().length > 0;
+  }
+
+  async commitAndGetRepositoriesWithChanges(
+    repositories: Repository[],
+    worktreePaths: Map<string, string>,
+    commitMessage: string,
+  ): Promise<Repository[]> {
+    const reposWithChanges: Repository[] = [];
+
+    for (const repository of repositories) {
+      const worktreePath = worktreePaths.get(repository.fullName);
+      if (!worktreePath) {
+        throw new Error(`No worktree path for ${repository.fullName}`);
+      }
+
+      const hasUncommitted = await this.hasUncommittedChanges(worktreePath);
+      if (hasUncommitted) {
+        await this.commitChanges(worktreePath, commitMessage);
+      }
+
+      const hasChanges = await this.hasBranchDiverged(
+        worktreePath,
+        repository.defaultBranch,
+      );
+      if (hasChanges) {
+        reposWithChanges.push(repository);
+      }
+    }
+
+    return reposWithChanges;
   }
 
   private async ensureRepositoryCloned(repository: Repository): Promise<void> {
@@ -173,10 +227,15 @@ export class WorkspaceManager implements OnModuleInit {
     return join(this.repositoriesDirectory(), repository.fullName);
   }
 
-  private worktreePath(repository: Repository, ticketId: string): string {
+  /** Returns the worktree path for a repository/ticket. Path may not exist yet. */
+  getWorktreePath(repository: Repository, ticketId: string): string {
     const safeTicketId = ticketId.replace(/[^a-zA-Z0-9\-_]/g, "-");
     const safeRepoName = repository.fullName.replace("/", "--");
     return join(this.worktreesDirectory(), `${safeRepoName}--${safeTicketId}`);
+  }
+
+  private worktreePath(repository: Repository, ticketId: string): string {
+    return this.getWorktreePath(repository, ticketId);
   }
 
   private ensureDirectoryExists(directoryPath: string): void {

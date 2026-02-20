@@ -9,9 +9,10 @@ import { PullRequestService } from "./pull-request.service.js";
 import { AgentsModule } from "../../providers/agents/agents.module.js";
 import { SourceControlModule } from "../../providers/source-control/source-control.module.js";
 import { WorkspaceModule } from "../../workspace/workspace.module.js";
+import type { WorkspaceManager } from "../../workspace/manager.js";
+import { WORKSPACE_MANAGER } from "../../workspace/tokens.js";
 import { ConfigurationModule } from "../configuration/configuration.module.js";
 import { ConfigurationService } from "../configuration/configuration.service.js";
-import { WorkspaceManager } from "../../workspace/manager.js";
 
 @Module({
   imports: [
@@ -39,7 +40,7 @@ import { WorkspaceManager } from "../../workspace/manager.js";
           pullRequestService,
           configService,
         ),
-      inject: [CODING_AGENT, WorkspaceManager, PullRequestService, ConfigurationService],
+      inject: [CODING_AGENT, WORKSPACE_MANAGER, PullRequestService, ConfigurationService],
     },
     PullRequestService,
     OrchestratorV1,

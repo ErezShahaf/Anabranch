@@ -113,8 +113,16 @@ export class GitHubProvider extends SourceControlProvider {
 
   async pushBranch(
     repositoryPath: string,
-    branchName: string
+    branchName: string,
+    repository: Repository
   ): Promise<void> {
+    const authUrl = await this.getAuthenticatedCloneUrl(repository);
+    await execFileAsync(
+      "git",
+      ["remote", "set-url", "origin", authUrl],
+      { cwd: repositoryPath }
+    );
+
     await execFileAsync(
       "git",
       ["push", "origin", branchName, "--force-with-lease"],

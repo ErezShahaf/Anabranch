@@ -12,20 +12,62 @@ import { DEFAULT_ASSESSMENT_OPTIONS } from "./default-assessment-options.js";
 import { DEFAULT_EXECUTION_OPTIONS } from "./default-execution-options.js";
 import type { AnthropicService } from "./anthropic.service.js";
 import { validateAssessmentResult } from "../../../core/orchestrator/assessment-result.schema.js";
+import { extractClaudeQueryResult, type ClaudeQueryResult } from "./claude-query.util.js";
 
 export class ClaudeCodeAgent extends CodingAgent {
   readonly name = "claude-code";
+  private readonly apiKey: string;
   private readonly anthropicService: AnthropicService;
   private readonly logger: Logger;
 
-  constructor(anthropicService: AnthropicService, logger: Logger) {
+  constructor(apiKey: string, anthropicService: AnthropicService, logger: Logger) {
     super();
+    this.apiKey = apiKey;
     this.anthropicService = anthropicService;
     this.logger = logger;
   }
 
   async healthCheck(): Promise<boolean> {
     return this.anthropicService.healthCheck();
+  }
+
+  private async runQuery(
+    prompt: string,
+    ticketId: string,
+    options: {
+      additionalDirectories?: string[];
+      assessment?: boolean;
+      cwd?: string;
+      canUseTool?: (toolName: string, input: Record<string, unknown>) => Promise<
+        | { behavior: "allow" }
+        | { behavior: "deny"; message: string; interrupt?: boolean }
+      >;
+    } = {}
+  ): Promise<ClaudeQueryResult & { success: true }> {
+    const { additionalDirectories, assessment = false, cwd, canUseTool } = options;
+    const defaultOptions = assessment ? DEFAULT_ASSESSMENT_OPTIONS : DEFAULT_EXECUTION_OPTIONS;
+
+    const result = query({
+      prompt,
+      options: {
+        ...defaultOptions,
+        ...(additionalDirectories && { additionalDirectories }),
+        ...(cwd && { cwd }),
+        ...(canUseTool && { canUseTool }),
+        env: { ANTHROPIC_API_KEY: this.apiKey },
+      },
+    });
+
+    const extracted = await extractClaudeQueryResult(result);
+
+    if (!extracted.success) {
+      const errorMessage =
+        extracted.error ?? "Claude Code returned no result";
+      this.logger.error(`${assessment ? "Assessment" : "Execution"} failed for ${ticketId}: ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
+
+    return extracted as ClaudeQueryResult & { success: true };
   }
 
   async assess(
@@ -36,35 +78,9 @@ export class ClaudeCodeAgent extends CodingAgent {
 
     this.logger.log(`running assessment with Claude Code for ${ticket.externalId}`);
 
-    const result = query({
-      prompt,
-      options: DEFAULT_ASSESSMENT_OPTIONS,
-    });
+    const extracted = await this.runQuery(prompt, ticket.externalId, { assessment: true });
 
-    let rawAssessment: unknown = null;
-    let totalCost = 0;
-
-    for await (const message of result) {
-      if (message.type === "result" && message.subtype === "success") {
-        totalCost = message.total_cost_usd;
-
-        if (message.structured_output) {
-          rawAssessment = message.structured_output;
-        } else {
-          rawAssessment = this.parseAssessmentFromText(message.result);
-        }
-      }
-
-      if (message.type === "result" && message.subtype !== "success") {
-        const errorMessage = "errors" in message ? message.errors.join("; ") : "unknown error";
-        throw new Error(`Claude Code assessment failed: ${errorMessage}`);
-      }
-    }
-
-    if (rawAssessment === null) {
-      throw new Error("Claude Code returned no assessment result");
-    }
-
+    const rawAssessment = extracted.structuredOutput as unknown;
     const assessmentData = validateAssessmentResult(rawAssessment);
 
     this.logger.log(
@@ -84,50 +100,31 @@ export class ClaudeCodeAgent extends CodingAgent {
 
     this.logger.log(`running execution with Claude Code for ${ticket.externalId}`);
 
-
-    const result = query({
-      prompt,
-      options: {
-        ...DEFAULT_EXECUTION_OPTIONS,
-        additionalDirectories: workDirectories,
+    const extracted = await this.runQuery(prompt, ticket.externalId, {
+      additionalDirectories: workDirectories,
+      assessment: false,
+      cwd: workDirectories[0],
+      canUseTool: async (toolName: string, input: Record<string, unknown>) => {
+        if (toolName === "Bash" && typeof input.command === "string") {
+          if (/git\s+(add|commit)/i.test(input.command)) {
+            return {
+              behavior: "deny" as const,
+              message: "Do not run git add or git commit. We will commit your changes automatically.",
+            };
+          }
+        }
+        return { behavior: "allow" as const };
       },
     });
 
-    let summary = "";
-    let totalCost = 0;
-    let success = false;
-
-    for await (const message of result) {
-      if (message.type === "result" && message.subtype === "success") {
-        summary = message.result;
-        totalCost = message.total_cost_usd;
-        success = true;
-      }
-
-      if (message.type === "result" && message.subtype !== "success") {
-        const errorMessage = "errors" in message ? message.errors.join("; ") : "unknown error";
-        summary = `Execution failed: ${errorMessage}`;
-        success = false;
-      }
-    }
-
-    this.logger.log(`execution complete for ${ticket.externalId} (success: ${success})`);
+    this.logger.log(`execution complete for ${ticket.externalId}`);
 
     return {
-      success,
+      success: true,
       filesChanged: [],
-      summary,
+      summary: extracted.result ?? "",
       testsPassed: null,
-      costInDollars: totalCost,
+      costInDollars: extracted.totalCostUsd,
     };
-  }
-
-  private parseAssessmentFromText(text: string): unknown {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not find JSON in Claude Code assessment response");
-    }
-
-    return JSON.parse(jsonMatch[0]) as unknown;
   }
 }

@@ -44,7 +44,13 @@ export class OrchestratorV1 extends TaskOrchestrator {
 
       task.status = "executing";
 
-      await this.executionService.execute(task as AssessedTicketTask, repositories);
+      const assessedTask: AssessedTicketTask = { ...task, assessment };
+      const { result, pullRequests } = await this.executionService.execute(
+        assessedTask,
+        repositories,
+      );
+      task.result = result;
+      task.pullRequests = pullRequests;
       task.status = "succeeded";
     } catch (error: unknown) {
       task.status = "failed";
