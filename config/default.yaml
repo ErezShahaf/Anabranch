@@ -31,10 +31,22 @@ agent:
   # API key for the selected agent provider (injected from .env)
   apiKey: ${AGENT_API_KEY}
   assessment:
+    # Skip the assessment step and proceed directly to execution (default: false)
+    # When set to true:
+    # - Tasks go straight to execution without confidence/scope validation
+    # - The AI will attempt all tasks regardless of perceived complexity
+    # - The agent will still verify task clarity before proceeding
+    # - If the task is too ambiguous, the agent will abort without creating a PR
+    # When set to false (recommended for initial setup):
+    # - Tasks are assessed first for confidence and scope
+    # - Only tasks meeting the thresholds below will be executed
+    skipAssessment: false
     # Minimum confidence score (0-100) for the AI to proceed autonomously
+    # Only used when skipAssessment is false
     # Lower values = AI proceeds with less certainty, Higher values = AI requires more confidence
     confidenceThreshold: 80
     # Maximum task scope the AI is allowed to handle autonomously
+    # Only used when skipAssessment is false
     # Supported values: trivial, small, medium, large, architectural
     # Larger scopes allow the AI to tackle more complex tasks
     maxScope: small

@@ -93,7 +93,7 @@ export class ClaudeCodeAgent extends CodingAgent {
   async execute(
     ticket: Ticket,
     workDirectories: string[],
-    assessment: AssessmentResult,
+    assessment: AssessmentResult | null,
     _configuration: AgentConfiguration
   ): Promise<AgentResult> {
     const prompt = buildExecutionPrompt(ticket, assessment, workDirectories);
@@ -119,12 +119,44 @@ export class ClaudeCodeAgent extends CodingAgent {
 
     this.logger.log(`execution complete for ${ticket.externalId}`);
 
+    const resultText = extracted.result ?? "";
+    const { shouldCreatePR, skipReason } = this.parseExecutionResult(resultText);
+
     return {
       success: true,
       filesChanged: [],
-      summary: extracted.result ?? "",
+      summary: resultText,
       testsPassed: null,
       costInDollars: extracted.totalCostUsd,
+      shouldCreatePR,
+      skipReason,
     };
+  }
+
+  private parseExecutionResult(resultText: string): {
+    shouldCreatePR: boolean;
+    skipReason?: string;
+  } {
+    // Look for SHOULD_CREATE_PR marker in the output
+    const shouldCreatePRMatch = resultText.match(/SHOULD_CREATE_PR:\s*(true|false)/i);
+
+    if (!shouldCreatePRMatch) {
+      // If no marker found, default to creating PR (backwards compatible)
+      return { shouldCreatePR: true };
+    }
+
+    const shouldCreatePR = shouldCreatePRMatch[1].toLowerCase() === "true";
+
+    if (!shouldCreatePR) {
+      // Look for SKIP_REASON
+      const skipReasonMatch = resultText.match(/SKIP_REASON:\s*(.+?)(?:\n|$)/i);
+      const skipReason = skipReasonMatch
+        ? skipReasonMatch[1].trim()
+        : "Task was too ambiguous to complete";
+
+      return { shouldCreatePR, skipReason };
+    }
+
+    return { shouldCreatePR };
   }
 }

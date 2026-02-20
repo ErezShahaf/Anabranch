@@ -68,14 +68,16 @@ export class PullRequestService {
       sections.push(`- **Link**: ${task.ticket.url}`);
     }
 
-    sections.push("");
-    sections.push(`## Assessment`);
-    sections.push(`- **Confidence**: ${assessment.confidence}/100`);
-    sections.push(`- **Scope**: ${assessment.scope}`);
-    sections.push(`- **Reasoning**: ${assessment.reasoning}`);
+    if (assessment) {
+      sections.push("");
+      sections.push(`## Assessment`);
+      sections.push(`- **Confidence**: ${assessment.confidence}/100`);
+      sections.push(`- **Scope**: ${assessment.scope}`);
+      sections.push(`- **Reasoning**: ${assessment.reasoning}`);
 
-    if (assessment.riskFactors.length > 0) {
-      sections.push(`- **Risk Factors**: ${assessment.riskFactors.join(", ")}`);
+      if (assessment.riskFactors.length > 0) {
+        sections.push(`- **Risk Factors**: ${assessment.riskFactors.join(", ")}`);
+      }
     }
 
     if (siblingPullRequests.length > 0) {

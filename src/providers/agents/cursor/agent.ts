@@ -68,7 +68,7 @@ export class CursorAgent extends CodingAgent {
   async execute(
     ticket: Ticket,
     workDirectories: string[],
-    assessment: AssessmentResult,
+    assessment: AssessmentResult | null,
   ): Promise<AgentResult> {
     const prompt = buildExecutionPrompt(ticket, assessment, workDirectories);
 
@@ -88,13 +88,44 @@ export class CursorAgent extends CodingAgent {
 
     this.logger.log(`execution complete for ${ticket.externalId} (success: ${success})`);
 
+    const { shouldCreatePR, skipReason } = this.parseExecutionResult(summary);
+
     return {
       success,
       filesChanged: [],
       summary,
       testsPassed: null,
       costInDollars: null,
+      shouldCreatePR,
+      skipReason,
     };
+  }
+
+  private parseExecutionResult(resultText: string): {
+    shouldCreatePR: boolean;
+    skipReason?: string;
+  } {
+    // Look for SHOULD_CREATE_PR marker in the output
+    const shouldCreatePRMatch = resultText.match(/SHOULD_CREATE_PR:\s*(true|false)/i);
+
+    if (!shouldCreatePRMatch) {
+      // If no marker found, default to creating PR (backwards compatible)
+      return { shouldCreatePR: true };
+    }
+
+    const shouldCreatePR = shouldCreatePRMatch[1].toLowerCase() === "true";
+
+    if (!shouldCreatePR) {
+      // Look for SKIP_REASON
+      const skipReasonMatch = resultText.match(/SKIP_REASON:\s*(.+?)(?:\n|$)/i);
+      const skipReason = skipReasonMatch
+        ? skipReasonMatch[1].trim()
+        : "Task was too ambiguous to complete";
+
+      return { shouldCreatePR, skipReason };
+    }
+
+    return { shouldCreatePR };
   }
 
   private runCursorCommand(

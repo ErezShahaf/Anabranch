@@ -3,12 +3,22 @@ import type { AssessmentResult } from "../../../core/orchestrator/types.js";
 
 export function buildExecutionPrompt(
   ticket: Ticket,
-  assessment: AssessmentResult,
+  assessment: AssessmentResult | null,
   workDirectories: string[]
 ): string {
   const directoryList = workDirectories
     .map((directory) => `  - ${directory}`)
     .join("\n");
+
+  const assessmentSection = assessment
+    ? `
+PRIOR ASSESSMENT:
+  Scope: ${assessment.scope}
+  Confidence: ${assessment.confidence}/100
+  Reasoning: ${assessment.reasoning}
+  Affected Repositories: ${assessment.affectedRepositories.join(", ")}
+`
+    : "";
 
   return `You are an autonomous coding agent. Your job is to implement the following
 task completely and correctly.
@@ -18,13 +28,7 @@ TASK:
   Title: ${ticket.title}
   Description:
 ${indentBlock(ticket.description, 4)}
-
-PRIOR ASSESSMENT:
-  Scope: ${assessment.scope}
-  Confidence: ${assessment.confidence}/100
-  Reasoning: ${assessment.reasoning}
-  Affected Repositories: ${assessment.affectedRepositories.join(", ")}
-
+${assessmentSection}
 WORKING DIRECTORIES (one per affected repository):
 ${directoryList}
 
@@ -37,14 +41,34 @@ RULES:
    test suite.
 5. Do NOT run git add, git commit, or any git commands. Only make file edits.
    We will commit your changes automatically.
-6. If at any point you realize the task is more complex than expected,
-   stop and explain why rather than making a guess.
+6. IMPORTANT: You are a highly capable AI agent. You should feel confident
+   tackling complex tasks and making implementation decisions. However, if
+   the task description is fundamentally ambiguous or could mean several
+   completely different things, you MUST abort the work.
+
+TASK CLARITY VALIDATION:
+Before starting work, evaluate if the task is clear enough to implement:
+- If the task is descriptive enough to know what needs to be done, proceed
+  with confidence and do high-quality, complete work.
+- If the task is vague but context from the codebase makes it clear, proceed.
+- If the task is so ambiguous that it could mean multiple completely different
+  things (e.g., "improve the system" without specifics), ABORT and explain why.
 
 WORKFLOW:
 1. Explore the relevant parts of the codebase to understand the context.
-2. Implement the changes.
-3. Review your own changes for correctness.
-4. Do NOT commit. Output a brief summary of what you changed and why.`;
+2. Validate that the task is clear enough to proceed. If not, stop here.
+3. Implement the changes with confidence and completeness.
+4. Review your own changes for correctness.
+5. Do NOT commit. Output a brief summary of what you changed and why.
+6. At the end, you MUST indicate whether a PR should be created using this
+   exact format:
+
+   SHOULD_CREATE_PR: true
+
+   Or if the task was too ambiguous to complete:
+
+   SHOULD_CREATE_PR: false
+   SKIP_REASON: <explain what information is missing or ambiguous>`;
 }
 
 function indentBlock(text: string, spaces: number): string {
