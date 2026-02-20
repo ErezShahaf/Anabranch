@@ -1,3 +1,22 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# ⚠️  IMPORTANT: ENVIRONMENT VARIABLE INJECTION
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# This configuration file uses ${VARIABLE_NAME} syntax to inject values from
+# your .env file at runtime. These placeholders are automatically replaced
+# with the actual values from environment variables.
+#
+# ⚠️  DO NOT replace ${...} placeholders with hardcoded values directly in
+#     this file. Instead, define the values in your .env file.
+#
+# Example:
+#   - In this file:     apiKey: ${AGENT_API_KEY}
+#   - In your .env:     AGENT_API_KEY=sk-ant-1234567890abcdef
+#
+# See .env.example for all required environment variables.
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
 server:
   port: 3000
   host: 0.0.0.0
@@ -7,48 +26,60 @@ orchestrator:
   provider: default
 
 agent:
-  # Exactly one: "claude-code" or "cursor"
+  # AI agent provider - Supported values: "claude-code" or "cursor"
   provider: claude-code
+  # API key for the selected agent provider (injected from .env)
   apiKey: ${AGENT_API_KEY}
   assessment:
     # Minimum confidence score (0-100) for the AI to proceed autonomously
+    # Lower values = AI proceeds with less certainty, Higher values = AI requires more confidence
     confidenceThreshold: 80
-    # Maximum task scope the AI is allowed to handle
-    # Options: trivial, small, medium, large, architectural
+    # Maximum task scope the AI is allowed to handle autonomously
+    # Supported values: trivial, small, medium, large, architectural
+    # Larger scopes allow the AI to tackle more complex tasks
     maxScope: small
   execution:
+    # Maximum number of files the agent can modify in a single task
     maxFileChanges: 20
+    # Maximum time (in minutes) before a task execution times out
     timeoutMinutes: 30
-    # How many times to retry if the agent fails or tests don't pass
+    # Number of retry attempts if the agent fails or tests don't pass
     retries: 3
 
 ticketing:
   jira:
     enabled: true
+    # Secret token for authenticating Jira webhooks (injected from .env)
     webhookSecret: ${JIRA_WEBHOOK_SECRET}
     filters:
-      # Only process tickets from these Jira projects (empty = all)
+      # Only process tickets from these Jira projects (empty array = process all projects)
       projects: []
       # Only process tickets that have ALL of these labels (empty = no label requirement)
       labels: []
       # Skip tickets that have ANY of these labels
       excludeLabels: []
-      # Only process these issue types (empty = all types)
+      # Only process these issue types, e.g., ["Story", "Bug", "Task"] (empty = all types)
       issueTypes: []
       # Only process tickets assigned to these users (empty = all assignees)
       assignees: []
 
 sourceControl:
   github:
+    # GitHub App ID (injected from .env)
     appId: "${GITHUB_APP_ID}"
+    # GitHub App private key in PEM format (injected from .env)
     privateKey: ${GITHUB_APP_PRIVATE_KEY}
+    # GitHub App installation ID for your organization/account (injected from .env)
     installationId: "${GITHUB_APP_INSTALLATION_ID}"
-    # Default base branch for pull requests (repos can override via their own default branch)
+    # Default base branch for pull requests (individual repos can override this)
     baseBranch: main
 
 workspace:
+  # Root directory where agent workspaces will be created
   basePath: /data/workspaces
 
 logging:
+  # Log level - Supported values: trace, debug, info, warn, error, fatal
   level: info
+  # Log output format - Supported values: json, pretty
   format: pretty
