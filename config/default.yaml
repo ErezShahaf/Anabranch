@@ -22,76 +22,41 @@ server:
   host: 0.0.0.0
 
 orchestrator:
-  # Orchestrator implementation to use
   provider: default
 
 agent:
-  # AI agent provider - Supported values: "claude-code" or "cursor"
   provider: claude-code
-  # API key for the selected agent provider (injected from .env)
   apiKey: ${AGENT_API_KEY}
   assessment:
-    # Skip the assessment step and proceed directly to execution (default: false)
-    # When set to true:
-    # - Tasks go straight to execution without confidence/scope validation
-    # - The AI will attempt all tasks regardless of perceived complexity
-    # - The agent will still verify task clarity before proceeding
-    # - If the task is too ambiguous, the agent will abort without creating a PR
-    # When set to false (recommended for initial setup):
-    # - Tasks are assessed first for confidence and scope
-    # - Only tasks meeting the thresholds below will be executed
-    skipAssessment: false
-    # Minimum confidence score (0-100) for the AI to proceed autonomously
-    # Only used when skipAssessment is false
-    # Lower values = AI proceeds with less certainty, Higher values = AI requires more confidence
+    skipAssessment: true
     confidenceThreshold: 80
-    # Maximum task scope the AI is allowed to handle autonomously
-    # Only used when skipAssessment is false
-    # Supported values: trivial, small, medium, large, architectural
-    # Larger scopes allow the AI to tackle more complex tasks
     maxScope: small
   execution:
-    # Maximum number of files the agent can modify in a single task
     maxFileChanges: 20
-    # Maximum time (in minutes) before a task execution times out
     timeoutMinutes: 30
-    # Number of retry attempts if the agent fails or tests don't pass
     retries: 3
 
 ticketing:
   jira:
     enabled: true
-    # Secret token for authenticating Jira webhooks (injected from .env)
     webhookSecret: ${JIRA_WEBHOOK_SECRET}
     filters:
-      # Only process tickets from these Jira projects (empty array = process all projects)
       projects: []
-      # Only process tickets that have ALL of these labels (empty = no label requirement)
       labels: []
-      # Skip tickets that have ANY of these labels
       excludeLabels: []
-      # Only process these issue types, e.g., ["Story", "Bug", "Task"] (empty = all types)
       issueTypes: []
-      # Only process tickets assigned to these users (empty = all assignees)
       assignees: []
 
 sourceControl:
   github:
-    # GitHub App ID (injected from .env)
     appId: "${GITHUB_APP_ID}"
-    # GitHub App private key in PEM format (injected from .env)
     privateKey: ${GITHUB_APP_PRIVATE_KEY}
-    # GitHub App installation ID for your organization/account (injected from .env)
     installationId: "${GITHUB_APP_INSTALLATION_ID}"
-    # Default base branch for pull requests (individual repos can override this)
     baseBranch: main
 
 workspace:
-  # Root directory where agent workspaces will be created
   basePath: /data/workspaces
 
 logging:
-  # Log level - Supported values: trace, debug, info, warn, error, fatal
   level: info
-  # Log output format - Supported values: json, pretty
   format: pretty

@@ -9,12 +9,6 @@ export interface AgentConfiguration {
   provider: AgentProviderName;
   apiKey: string;
   assessment: {
-    /**
-     * Whether to skip the assessment step and directly execute tasks.
-     * When true, tasks go straight to execution without confidence/scope gates.
-     * The agent will still validate task clarity before proceeding.
-     * Default: false (run assessment step)
-     */
     skipAssessment?: boolean;
     confidenceThreshold: number;
     maxScope: TaskScope;

@@ -26,73 +26,49 @@ export class OrchestratorV1 extends TaskOrchestrator {
 
     try {
       const repositories = await this.assessmentService.listRepositories();
-      const skipAssessment = this.configService.config.agent.assessment.skipAssessment ?? false;
+      const skipAssessment = this.configService.config.agent.assessment.skipAssessment ?? true;
 
       if (skipAssessment) {
-        // Skip assessment, go directly to execution
         this.logger.log(`skipping assessment for ${ticketId} (skipAssessment: true)`);
-        task.status = "executing";
         task.assessment = null;
-
-        const assessedTask: AssessedTicketTask = { ...task, assessment: null };
-        const { result, pullRequests } = await this.executionService.execute(
-          assessedTask,
-          repositories,
-        );
-        task.result = result;
-        task.pullRequests = pullRequests;
-
-        // Check if agent decided to skip PR creation due to ambiguity
-        if (!result.shouldCreatePR) {
-          task.status = "skipped";
-          this.logger.log(
-            `task skipped: ${result.skipReason ?? "task was too ambiguous"} (${ticketId})`,
-          );
-          return;
-        }
-
-        task.status = "succeeded";
       } else {
-        // Run assessment as before
         task.status = "assessing";
-
         const assessment = await this.assessmentService.assess(task, repositories);
 
         if (!this.assessmentService.passesConfidenceGate(assessment.confidence, assessment.scope)) {
           task.status = "skipped";
+          task.assessment = assessment;
           this.logger.log(
             `task skipped: did not pass confidence gate (${ticketId}, confidence: ${assessment.confidence}, scope: ${assessment.scope})`,
           );
           return;
         }
-
         if (assessment.affectedRepositories.length === 0) {
           task.status = "skipped";
+          task.assessment = assessment;
           this.logger.log(`task skipped: no affected repositories identified (${ticketId})`);
           return;
         }
-
-        task.status = "executing";
-
-        const assessedTask: AssessedTicketTask = { ...task, assessment };
-        const { result, pullRequests } = await this.executionService.execute(
-          assessedTask,
-          repositories,
-        );
-        task.result = result;
-        task.pullRequests = pullRequests;
-
-        // Check if agent decided to skip PR creation
-        if (!result.shouldCreatePR) {
-          task.status = "skipped";
-          this.logger.log(
-            `task skipped: ${result.skipReason ?? "task was too ambiguous"} (${ticketId})`,
-          );
-          return;
-        }
-
-        task.status = "succeeded";
       }
+
+      task.status = "executing";
+      const assessedTask: AssessedTicketTask = { ...task, assessment: task.assessment ?? null };
+      const { result, pullRequests } = await this.executionService.execute(
+        assessedTask,
+        repositories,
+      );
+      task.result = result;
+      task.pullRequests = pullRequests;
+
+      if (!result.shouldCreatePR) {
+        task.status = "skipped";
+        this.logger.log(
+          `task skipped: ${result.skipReason ?? "task was too ambiguous"} (${ticketId})`,
+        );
+        return;
+      }
+
+      task.status = "succeeded";
     } catch (error: unknown) {
       task.status = "failed";
       task.errorMessage = error instanceof Error ? error.message : String(error);

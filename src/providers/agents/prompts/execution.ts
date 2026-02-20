@@ -60,15 +60,14 @@ WORKFLOW:
 3. Implement the changes with confidence and completeness.
 4. Review your own changes for correctness.
 5. Do NOT commit. Output a brief summary of what you changed and why.
-6. At the end, you MUST indicate whether a PR should be created using this
-   exact format:
+6. At the end, you MUST output a JSON block indicating whether a PR should be
+   created. Use this exact format on a single line at the very end:
 
-   SHOULD_CREATE_PR: true
+   {"shouldCreatePR": true}
 
    Or if the task was too ambiguous to complete:
 
-   SHOULD_CREATE_PR: false
-   SKIP_REASON: <explain what information is missing or ambiguous>`;
+   {"shouldCreatePR": false, "skipReason": "<explain what information is missing or ambiguous>"}`;
 }
 
 function indentBlock(text: string, spaces: number): string {

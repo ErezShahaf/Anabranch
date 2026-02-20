@@ -10,8 +10,8 @@ import { buildAssessmentPrompt } from "../prompts/assessment.js";
 import { buildExecutionPrompt } from "../prompts/execution.js";
 import { validateAssessmentResult } from "../../../core/orchestrator/assessment-result.schema.js";
 
-const ASSESSMENT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-const EXECUTION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+const ASSESSMENT_TIMEOUT_MS = 5 * 60 * 1000;
+const EXECUTION_TIMEOUT_MS = 15 * 60 * 1000;
 
 interface CursorJsonResult {
   result?: string;
@@ -105,27 +105,15 @@ export class CursorAgent extends CodingAgent {
     shouldCreatePR: boolean;
     skipReason?: string;
   } {
-    // Look for SHOULD_CREATE_PR marker in the output
-    const shouldCreatePRMatch = resultText.match(/SHOULD_CREATE_PR:\s*(true|false)/i);
-
-    if (!shouldCreatePRMatch) {
-      // If no marker found, default to creating PR (backwards compatible)
+    const jsonMatch = resultText.match(/\{\s*"shouldCreatePR"\s*:\s*(?:true|false)(?:\s*,\s*"skipReason"\s*:\s*"[^"]*")?\s*\}/);
+    if (!jsonMatch) {
       return { shouldCreatePR: true };
     }
-
-    const shouldCreatePR = shouldCreatePRMatch[1].toLowerCase() === "true";
-
-    if (!shouldCreatePR) {
-      // Look for SKIP_REASON
-      const skipReasonMatch = resultText.match(/SKIP_REASON:\s*(.+?)(?:\n|$)/i);
-      const skipReason = skipReasonMatch
-        ? skipReasonMatch[1].trim()
-        : "Task was too ambiguous to complete";
-
-      return { shouldCreatePR, skipReason };
+    const parsed = JSON.parse(jsonMatch[0]) as { shouldCreatePR: boolean; skipReason?: string };
+    if (!parsed.shouldCreatePR && !parsed.skipReason) {
+      return { shouldCreatePR: false, skipReason: "Task was too ambiguous to complete" };
     }
-
-    return { shouldCreatePR };
+    return { shouldCreatePR: parsed.shouldCreatePR, skipReason: parsed.skipReason };
   }
 
   private runCursorCommand(

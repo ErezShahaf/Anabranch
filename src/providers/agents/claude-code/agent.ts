@@ -12,6 +12,7 @@ import { DEFAULT_ASSESSMENT_OPTIONS } from "./default-assessment-options.js";
 import { DEFAULT_EXECUTION_OPTIONS } from "./default-execution-options.js";
 import type { AnthropicService } from "./anthropic.service.js";
 import { validateAssessmentResult } from "../../../core/orchestrator/assessment-result.schema.js";
+import { validateExecutionOutput } from "../execution-output.schema.js";
 import { extractClaudeQueryResult, type ClaudeQueryResult } from "./claude-query.util.js";
 
 export class ClaudeCodeAgent extends CodingAgent {
@@ -119,44 +120,22 @@ export class ClaudeCodeAgent extends CodingAgent {
 
     this.logger.log(`execution complete for ${ticket.externalId}`);
 
-    const resultText = extracted.result ?? "";
-    const { shouldCreatePR, skipReason } = this.parseExecutionResult(resultText);
+    const output = validateExecutionOutput(extracted.structuredOutput)
+
+    const shouldCreatePR = output.shouldCreatePR;
+    const skipReason =
+      !shouldCreatePR && !output.skipReason
+        ? "Task was too ambiguous to complete"
+        : output.skipReason;
 
     return {
       success: true,
       filesChanged: [],
-      summary: resultText,
+      summary: extracted.result ?? "",
       testsPassed: null,
       costInDollars: extracted.totalCostUsd,
       shouldCreatePR,
       skipReason,
     };
-  }
-
-  private parseExecutionResult(resultText: string): {
-    shouldCreatePR: boolean;
-    skipReason?: string;
-  } {
-    // Look for SHOULD_CREATE_PR marker in the output
-    const shouldCreatePRMatch = resultText.match(/SHOULD_CREATE_PR:\s*(true|false)/i);
-
-    if (!shouldCreatePRMatch) {
-      // If no marker found, default to creating PR (backwards compatible)
-      return { shouldCreatePR: true };
-    }
-
-    const shouldCreatePR = shouldCreatePRMatch[1].toLowerCase() === "true";
-
-    if (!shouldCreatePR) {
-      // Look for SKIP_REASON
-      const skipReasonMatch = resultText.match(/SKIP_REASON:\s*(.+?)(?:\n|$)/i);
-      const skipReason = skipReasonMatch
-        ? skipReasonMatch[1].trim()
-        : "Task was too ambiguous to complete";
-
-      return { shouldCreatePR, skipReason };
-    }
-
-    return { shouldCreatePR };
   }
 }
