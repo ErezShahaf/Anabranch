@@ -43,8 +43,6 @@ agent:
     maxFileChanges: 20
     # Maximum time (in minutes) before a task execution times out
     timeoutMinutes: 30
-    # Number of retry attempts if the agent fails or tests don't pass
-    retries: 3
 
 ticketing:
   jira:
