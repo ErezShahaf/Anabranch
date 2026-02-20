@@ -63,9 +63,9 @@ The goal is to create a development experience where:
 
 We believe this approach can significantly boost productivity while keeping developers in control and engaged with meaningful work.
 
-## Open Source
+## Open Code
 
-Anabranch is **open-source software**. We believe in building in the open and learning together with the community. Whether you're curious about AI-assisted development, want to contribute, or just want to follow along with our journey—you're welcome here!
+Anabranch is **open code**. We believe in building in the open and learning together with the community. Whether you're curious about AI-assisted development, want to contribute, or just want to follow along with our journey—you're welcome here!
 
 ## Getting Started
 
