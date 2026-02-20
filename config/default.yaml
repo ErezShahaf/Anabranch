@@ -22,17 +22,32 @@ server:
   host: 0.0.0.0
 
 orchestrator:
+  # Provider to use for orchestrating tasks
+  # Accepted values: "default"
   provider: default
 
 agent:
+  # AI agent provider to use for code generation and task execution
+  # Accepted values: "claude-code" | "cursor"
   provider: claude-code
   apiKey: ${AGENT_API_KEY}
   assessment:
+    # Whether to skip the assessment phase before execution
+    # If true, tasks proceed directly to execution without confidence/scope evaluation
+    # If false, tasks are assessed first and may be rejected based on confidenceThreshold/maxScope
     skipAssessment: true
+    # Minimum confidence percentage (0-100) required to proceed with task execution
+    # Only applies when skipAssessment is false
     confidenceThreshold: 80
+    # Maximum task scope allowed for automatic execution
+    # Accepted values: "trivial" | "small" | "medium" | "large" | "architectural"
+    # Tasks with larger scope than this will be rejected. Only applies when skipAssessment is false
     maxScope: small
   execution:
+    # Maximum number of files that can be changed in a single task execution
+    # Tasks attempting to modify more files will be stopped
     maxFileChanges: 20
+    # Maximum time in minutes allowed for task execution before timeout
     timeoutMinutes: 30
 
 ticketing:
@@ -40,10 +55,20 @@ ticketing:
     enabled: true
     webhookSecret: ${JIRA_WEBHOOK_SECRET}
     filters:
+      # List of Jira project keys to process (e.g., ["PROJ", "TEAM"])
+      # Empty array means all projects are accepted
       projects: []
+      # List of labels that tickets must have to be processed
+      # Empty array means no label filtering (all tickets accepted)
       labels: []
+      # List of labels that will exclude tickets from processing
+      # Empty array means no tickets are excluded based on labels
       excludeLabels: []
+      # List of Jira issue types to process (e.g., ["Bug", "Story", "Task"])
+      # Empty array means all issue types are accepted
       issueTypes: []
+      # List of assignee usernames/emails to filter tickets by
+      # Empty array means tickets with any assignee (or unassigned) are accepted
       assignees: []
 
 sourceControl:
@@ -51,11 +76,20 @@ sourceControl:
     appId: "${GITHUB_APP_ID}"
     privateKey: ${GITHUB_APP_PRIVATE_KEY}
     installationId: "${GITHUB_APP_INSTALLATION_ID}"
+    # Default branch name to use as base for creating pull requests
+    # Pull requests will be created against this branch
     baseBranch: main
 
 workspace:
+  # Base directory path where repository worktrees are created and managed
+  # Each task gets its own isolated workspace within this directory
   basePath: /data/workspaces
 
 logging:
+  # Log level for application output
+  # Accepted values: "fatal" | "error" | "warn" | "info" | "debug" | "trace"
+  # (Standard Pino log levels)
   level: info
+  # Log output format
+  # Accepted values: "pretty" (colorized, human-readable) | "json" (structured JSON)
   format: pretty
