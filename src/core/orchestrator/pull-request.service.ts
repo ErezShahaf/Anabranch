@@ -1,0 +1,95 @@
+import { Inject, Injectable } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
+import type { AssessedTicketTask } from "../queue/types.js";
+import type { Repository, PullRequest } from "../../providers/source-control/types.js";
+import type { SourceControlProvider } from "../../providers/source-control/base.js";
+import { SOURCE_CONTROL_PROVIDER } from "../../providers/source-control/tokens.js";
+import type { WorkspaceManager } from "../../workspace/manager.js";
+import { WORKSPACE_MANAGER } from "../../workspace/tokens.js";
+
+function getWorktreePath(worktreePaths: Map<string, string>, repoFullName: string): string {
+  const path = worktreePaths.get(repoFullName);
+  if (!path) throw new Error(`No worktree path for ${repoFullName}`);
+  return path;
+}
+
+@Injectable()
+export class PullRequestService {
+  private readonly logger = new Logger(PullRequestService.name);
+
+  constructor(
+    @Inject(SOURCE_CONTROL_PROVIDER) private readonly sourceControl: SourceControlProvider,
+  ) {}
+
+  async createPullRequestsForRepositories(
+    task: AssessedTicketTask,
+    repositories: Repository[],
+    worktreePaths: Map<string, string>,
+  ): Promise<PullRequest[]> {
+    const ticketId = task.ticket.externalId;
+    const branchName = `anabranch/${ticketId}`;
+    const createdPullRequests: PullRequest[] = [];
+
+    for (const repository of repositories) {
+      const worktreePath = getWorktreePath(worktreePaths, repository.fullName);
+
+      await this.sourceControl.pushBranch(worktreePath, branchName, repository);
+
+      const [owner, repositoryName] = repository.fullName.split("/") as [string, string];
+      const pullRequest = await this.sourceControl.createPullRequest({
+        owner,
+        repositoryName,
+        title: `[Anabranch] ${task.ticket.title}`,
+        body: this.buildPullRequestBody(task, createdPullRequests),
+        headBranch: branchName,
+        baseBranch: repository.defaultBranch,
+      });
+
+      createdPullRequests.push(pullRequest);
+      this.logger.log(
+        `pull request created for ${repository.fullName}: ${pullRequest.url}`,
+      );
+    }
+
+    return createdPullRequests;
+  }
+
+  buildPullRequestBody(
+    task: AssessedTicketTask,
+    siblingPullRequests: PullRequest[],
+  ): string {
+    const assessment = task.assessment;
+    const sections: string[] = [];
+
+    sections.push(`## Ticket`);
+    sections.push(`- **ID**: ${task.ticket.externalId}`);
+    sections.push(`- **Title**: ${task.ticket.title}`);
+    if (task.ticket.url) {
+      sections.push(`- **Link**: ${task.ticket.url}`);
+    }
+
+    sections.push("");
+    sections.push(`## Assessment`);
+    sections.push(`- **Confidence**: ${assessment.confidence}/100`);
+    sections.push(`- **Scope**: ${assessment.scope}`);
+    sections.push(`- **Reasoning**: ${assessment.reasoning}`);
+
+    if (assessment.riskFactors.length > 0) {
+      sections.push(`- **Risk Factors**: ${assessment.riskFactors.join(", ")}`);
+    }
+
+    if (siblingPullRequests.length > 0) {
+      sections.push("");
+      sections.push(`## Related Pull Requests`);
+      for (const sibling of siblingPullRequests) {
+        sections.push(`- ${sibling.url}`);
+      }
+    }
+
+    sections.push("");
+    sections.push("---");
+    sections.push("*This pull request was created automatically by [Anabranch](https://github.com/ErezShahaf/Anabranch).*");
+
+    return sections.join("\n");
+  }
+}

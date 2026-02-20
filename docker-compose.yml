@@ -1,0 +1,15 @@
+services:
+  anabranch:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - workspaces:/data/workspaces
+      - ./config:/config:ro
+      - ./secrets:/secrets:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  workspaces:
