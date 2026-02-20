@@ -12,6 +12,7 @@ import { DEFAULT_ASSESSMENT_OPTIONS } from "./default-assessment-options.js";
 import { DEFAULT_EXECUTION_OPTIONS } from "./default-execution-options.js";
 import type { AnthropicService } from "./anthropic.service.js";
 import { validateAssessmentResult } from "../../../core/orchestrator/assessment-result.schema.js";
+import { validateExecutionOutput } from "../execution-output.schema.js";
 import { extractClaudeQueryResult, type ClaudeQueryResult } from "./claude-query.util.js";
 
 export class ClaudeCodeAgent extends CodingAgent {
@@ -93,7 +94,7 @@ export class ClaudeCodeAgent extends CodingAgent {
   async execute(
     ticket: Ticket,
     workDirectories: string[],
-    assessment: AssessmentResult,
+    assessment: AssessmentResult | null,
     _configuration: AgentConfiguration
   ): Promise<AgentResult> {
     const prompt = buildExecutionPrompt(ticket, assessment, workDirectories);
@@ -119,12 +120,22 @@ export class ClaudeCodeAgent extends CodingAgent {
 
     this.logger.log(`execution complete for ${ticket.externalId}`);
 
+    const output = validateExecutionOutput(extracted.structuredOutput)
+
+    const shouldCreatePR = output.shouldCreatePR;
+    const skipReason =
+      !shouldCreatePR && !output.skipReason
+        ? "Task was too ambiguous to complete"
+        : output.skipReason;
+
     return {
       success: true,
       filesChanged: [],
       summary: extracted.result ?? "",
       testsPassed: null,
       costInDollars: extracted.totalCostUsd,
+      shouldCreatePR,
+      skipReason,
     };
   }
 }

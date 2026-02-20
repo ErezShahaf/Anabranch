@@ -17,7 +17,7 @@ export abstract class CodingAgent {
   abstract execute(
     ticket: Ticket,
     workDirectories: string[],
-    assessment: AssessmentResult,
+    assessment: AssessmentResult | null,
     configuration: AgentConfiguration
   ): Promise<AgentResult>;
 }

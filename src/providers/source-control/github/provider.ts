@@ -14,10 +14,10 @@ import { SourceControlProvider } from "../base.js";
 const execFileAsync = promisify(execFile);
 
 const MAX_PAGE_SIZE = 100;
-const CLONE_TIMEOUT_MS = 300_000; // 5 minutes
-const FETCH_TIMEOUT_MS = 120_000; // 2 minutes
-const PULL_TIMEOUT_MS = 120_000; // 2 minutes
-const PUSH_TIMEOUT_MS = 120_000; // 2 minutes
+const CLONE_TIMEOUT_MS = 300_000;
+const FETCH_TIMEOUT_MS = 120_000;
+const PULL_TIMEOUT_MS = 120_000;
+const PUSH_TIMEOUT_MS = 120_000;
 
 export class GitHubProvider extends SourceControlProvider {
   readonly name = "github";

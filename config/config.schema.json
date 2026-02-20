@@ -28,6 +28,7 @@
           "type": "object",
           "required": ["confidenceThreshold", "maxScope"],
           "properties": {
+            "skipAssessment": { "type": "boolean" },
             "confidenceThreshold": { "type": "integer", "minimum": 0, "maximum": 100 },
             "maxScope": { "type": "string", "enum": ["trivial", "small", "medium", "large", "architectural"] }
           }

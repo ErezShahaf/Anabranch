@@ -5,6 +5,7 @@ import { TaskOrchestrator } from "./base.js";
 import type { AssessmentService } from "./assessment.service.js";
 import type { ExecutionService } from "./execution.service.js";
 import { ASSESSMENT_SERVICE, EXECUTION_SERVICE } from "./tokens.js";
+import { ConfigurationService } from "../configuration/configuration.service.js";
 
 @Injectable()
 export class OrchestratorV1 extends TaskOrchestrator {
@@ -14,8 +15,36 @@ export class OrchestratorV1 extends TaskOrchestrator {
   constructor(
     @Inject(ASSESSMENT_SERVICE) private readonly assessmentService: AssessmentService,
     @Inject(EXECUTION_SERVICE) private readonly executionService: ExecutionService,
+    @Inject(ConfigurationService) private readonly configService: ConfigurationService,
   ) {
     super();
+  }
+
+  private async startAssessmentFlow(
+    task: TicketTask,
+    repositories: Awaited<ReturnType<AssessmentService["listRepositories"]>>,
+    ticketId: string,
+  ): Promise<boolean> {
+    task.status = "assessing";
+    const assessment = await this.assessmentService.assess(task, repositories);
+
+    if (!this.assessmentService.passesConfidenceGate(assessment.confidence, assessment.scope)) {
+      task.status = "skipped";
+      task.assessment = assessment;
+      this.logger.log(
+        `task skipped: did not pass confidence gate (${ticketId}, confidence: ${assessment.confidence}, scope: ${assessment.scope})`,
+      );
+      return false;
+    }
+    if (assessment.affectedRepositories.length === 0) {
+      task.status = "skipped";
+      task.assessment = assessment;
+      this.logger.log(`task skipped: no affected repositories identified (${ticketId})`);
+      return false;
+    }
+
+    task.assessment = assessment;
+    return true;
   }
 
   async handleTask(task: TicketTask): Promise<void> {
@@ -23,34 +52,33 @@ export class OrchestratorV1 extends TaskOrchestrator {
     this.logger.log(`beginning task processing for ${ticketId}`);
 
     try {
-      task.status = "assessing";
-
       const repositories = await this.assessmentService.listRepositories();
-      const assessment = await this.assessmentService.assess(task, repositories);
+      const skipAssessment = this.configService.config.agent.assessment.skipAssessment ?? true;
 
-      if (!this.assessmentService.passesConfidenceGate(assessment.confidence, assessment.scope)) {
-        task.status = "skipped";
-        this.logger.log(
-          `task skipped: did not pass confidence gate (${ticketId}, confidence: ${assessment.confidence}, scope: ${assessment.scope})`,
-        );
-        return;
-      }
-
-      if (assessment.affectedRepositories.length === 0) {
-        task.status = "skipped";
-        this.logger.log(`task skipped: no affected repositories identified (${ticketId})`);
-        return;
+      if (skipAssessment) {
+        this.logger.log(`skipping assessment for ${ticketId} (skipAssessment: true)`);
+      } else {
+        const shouldContinueToExecution = await this.startAssessmentFlow(task, repositories, ticketId);
+        if (!shouldContinueToExecution) return;
       }
 
       task.status = "executing";
-
-      const assessedTask: AssessedTicketTask = { ...task, assessment };
+      const assessedTask: AssessedTicketTask = { ...task, assessment: task.assessment ?? null };
       const { result, pullRequests } = await this.executionService.execute(
         assessedTask,
         repositories,
       );
       task.result = result;
       task.pullRequests = pullRequests;
+
+      if (!result.shouldCreatePR) {
+        task.status = "skipped";
+        this.logger.log(
+          `task skipped: ${result.skipReason ?? "task was too ambiguous"} (${ticketId})`,
+        );
+        return;
+      }
+
       task.status = "succeeded";
     } catch (error: unknown) {
       task.status = "failed";

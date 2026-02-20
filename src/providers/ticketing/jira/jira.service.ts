@@ -65,15 +65,12 @@ export class JiraService extends TicketProvider {
   }
 
   async getTicket(_ticketId: string): Promise<Ticket> {
-    // Could call Jira REST API GET /rest/api/3/issue/{id} for full issue.
-    // Extra data vs webhook: full description, comments, attachments, custom fields, history, watchers.
     throw new NotImplementedException(
       "Direct Jira ticket fetching is not yet implemented",
     );
   }
 
   async addComment(_ticketId: string, _comment: string): Promise<void> {
-    // Could POST to Jira REST API to add a comment (e.g. execution summary, assessment, PR links).
     throw new NotImplementedException(
       "Jira comment posting is not yet implemented",
     );

@@ -4,6 +4,8 @@ export interface AgentResult {
   summary: string;
   testsPassed: boolean | null;
   costInDollars: number | null;
+  shouldCreatePR: boolean;
+  skipReason?: string;
 }
 
 export interface TestResult {

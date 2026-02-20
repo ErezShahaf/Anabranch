@@ -50,6 +50,13 @@ export class ExecutionService {
         this.configuration.agent,
       );
 
+      if (!agentResult.shouldCreatePR) {
+        this.logger.log(
+          `skipping PR creation for ${ticketId}: ${agentResult.skipReason ?? "task was too ambiguous"}`,
+        );
+        return { result: agentResult, pullRequests: [] };
+      }
+
       const repositoriesWithChanges =
         await this.workspaceManager.commitAndGetRepositoriesWithChanges(
           allRepositories,

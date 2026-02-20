@@ -11,8 +11,8 @@ import { ConfigurationService } from "../core/configuration/configuration.servic
 
 const execFileAsync = promisify(execFile);
 
-const WORKTREE_ADD_TIMEOUT_MS = 60_000; // 1 minute
-const WORKTREE_REMOVE_TIMEOUT_MS = 30_000; // 30 seconds
+const WORKTREE_ADD_TIMEOUT_MS = 60_000;
+const WORKTREE_REMOVE_TIMEOUT_MS = 30_000;
 
 @Injectable()
 export class WorkspaceManager implements OnModuleInit {
@@ -207,7 +207,6 @@ export class WorkspaceManager implements OnModuleInit {
 
     const gitCommonDirectory = result.stdout.trim();
 
-    // git-common-dir returns the .git directory of the parent repository
     if (gitCommonDirectory.endsWith("/.git") || gitCommonDirectory.endsWith("\\.git")) {
       return gitCommonDirectory.slice(0, -5);
     }
@@ -227,7 +226,6 @@ export class WorkspaceManager implements OnModuleInit {
     return join(this.repositoriesDirectory(), repository.fullName);
   }
 
-  /** Returns the worktree path for a repository/ticket. Path may not exist yet. */
   getWorktreePath(repository: Repository, ticketId: string): string {
     const safeTicketId = ticketId.replace(/[^a-zA-Z0-9\-_]/g, "-");
     const safeRepoName = repository.fullName.replace("/", "--");

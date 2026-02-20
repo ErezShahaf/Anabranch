@@ -10,8 +10,8 @@ import { buildAssessmentPrompt } from "../prompts/assessment.js";
 import { buildExecutionPrompt } from "../prompts/execution.js";
 import { validateAssessmentResult } from "../../../core/orchestrator/assessment-result.schema.js";
 
-const ASSESSMENT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-const EXECUTION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+const ASSESSMENT_TIMEOUT_MS = 5 * 60 * 1000;
+const EXECUTION_TIMEOUT_MS = 15 * 60 * 1000;
 
 interface CursorJsonResult {
   result?: string;
@@ -68,7 +68,7 @@ export class CursorAgent extends CodingAgent {
   async execute(
     ticket: Ticket,
     workDirectories: string[],
-    assessment: AssessmentResult,
+    assessment: AssessmentResult | null,
   ): Promise<AgentResult> {
     const prompt = buildExecutionPrompt(ticket, assessment, workDirectories);
 
@@ -88,13 +88,32 @@ export class CursorAgent extends CodingAgent {
 
     this.logger.log(`execution complete for ${ticket.externalId} (success: ${success})`);
 
+    const { shouldCreatePR, skipReason } = this.parseExecutionResult(summary);
+
     return {
       success,
       filesChanged: [],
       summary,
       testsPassed: null,
       costInDollars: null,
+      shouldCreatePR,
+      skipReason,
     };
+  }
+
+  private parseExecutionResult(resultText: string): {
+    shouldCreatePR: boolean;
+    skipReason?: string;
+  } {
+    const jsonMatch = resultText.match(/\{\s*"shouldCreatePR"\s*:\s*(?:true|false)(?:\s*,\s*"skipReason"\s*:\s*"[^"]*")?\s*\}/);
+    if (!jsonMatch) {
+      return { shouldCreatePR: true };
+    }
+    const parsed = JSON.parse(jsonMatch[0]) as { shouldCreatePR: boolean; skipReason?: string };
+    if (!parsed.shouldCreatePR && !parsed.skipReason) {
+      return { shouldCreatePR: false, skipReason: "Task was too ambiguous to complete" };
+    }
+    return { shouldCreatePR: parsed.shouldCreatePR, skipReason: parsed.skipReason };
   }
 
   private runCursorCommand(

@@ -6,7 +6,7 @@ import { ConfigurationService } from "../configuration/configuration.service.js"
 @Module({
   imports: [
     PinoLoggerModule.forRootAsync({
-      imports: [ConfigurationModule], // Ensure ConfigModule is available
+      imports: [ConfigurationModule],
       inject: [ConfigurationService],
       useFactory: (configService: ConfigurationService) => {
         const config = configService.config.logging;

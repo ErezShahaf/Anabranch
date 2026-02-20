@@ -9,6 +9,7 @@ export interface AgentConfiguration {
   provider: AgentProviderName;
   apiKey: string;
   assessment: {
+    skipAssessment?: boolean;
     confidenceThreshold: number;
     maxScope: TaskScope;
   };

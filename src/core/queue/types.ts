@@ -24,5 +24,5 @@ export interface TicketTask {
 }
 
 export interface AssessedTicketTask extends TicketTask {
-  assessment: AssessmentResult;
+  assessment: AssessmentResult | null;
 }
