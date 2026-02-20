@@ -35,11 +35,10 @@
         },
         "execution": {
           "type": "object",
-          "required": ["maxFileChanges", "timeoutMinutes", "retries"],
+          "required": ["maxFileChanges", "timeoutMinutes"],
           "properties": {
             "maxFileChanges": { "type": "integer", "minimum": 1 },
-            "timeoutMinutes": { "type": "integer", "minimum": 1 },
-            "retries": { "type": "integer", "minimum": 0 }
+            "timeoutMinutes": { "type": "integer", "minimum": 1 }
           }
         }
       }

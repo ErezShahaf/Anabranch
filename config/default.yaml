@@ -34,7 +34,6 @@ agent:
   execution:
     maxFileChanges: 20
     timeoutMinutes: 30
-    retries: 3
 
 ticketing:
   jira:
