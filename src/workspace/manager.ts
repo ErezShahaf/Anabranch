@@ -56,7 +56,7 @@ export class WorkspaceManager implements OnModuleInit {
   ): Promise<void> {
     const worktreePath = this.worktreePath(repository, ticketId);
     if (existsSync(worktreePath)) {
-      this.logger.warn(
+      this.logger.log(
         `worktree already exists for ${repository.fullName}, removing before re-creating`,
       );
       await this.cleanupWorkspace(worktreePath);
