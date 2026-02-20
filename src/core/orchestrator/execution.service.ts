@@ -11,7 +11,6 @@ import type { WorkspaceManager } from "../../workspace/manager.js";
 import { WORKSPACE_MANAGER } from "../../workspace/tokens.js";
 import { PullRequestService } from "./pull-request.service.js";
 import { ConfigurationService } from "../configuration/configuration.service.js";
-import { Retry } from "../../common/decorators/retry.decorator.js";
 
 @Injectable()
 export class ExecutionService {
@@ -27,14 +26,6 @@ export class ExecutionService {
     this.configuration = configService.config;
   }
 
-  @Retry({
-    maxRetries: (self: ExecutionService) => self.configuration.agent.execution.retries,
-    onRetry: (self: ExecutionService, attempt: number, error: Error) => {
-      self.logger.warn(
-        `execution attempt ${attempt} failed, retrying: ${error.message}`,
-      );
-    },
-  })
   async execute(
     task: AssessedTicketTask,
     allRepositories: Repository[],

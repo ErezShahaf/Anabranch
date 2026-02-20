@@ -15,7 +15,6 @@ export interface AgentConfiguration {
   execution: {
     maxFileChanges: number;
     timeoutMinutes: number;
-    retries: number;
   };
 }
 
