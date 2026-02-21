@@ -21,6 +21,7 @@ Modern AI coding agents are powerful, but they are still largely **manual**:
 4. They wait.
 5. They iterate.
 6. They open a PR.
+7. A second developer reviews the PR.
 
 This works — but it does not change the interaction model.
 
