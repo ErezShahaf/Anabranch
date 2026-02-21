@@ -160,19 +160,4 @@ Areas of interest:
 
 Open an issue to discuss ideas before large changes.
 
----
 
-## Installation (Example)
-
-```bash
-git clone https://github.com/your-username/anabranch.git
-cd anabranch
-npm install
-npm run start:dev
-```
-
----
-
-## License
-
-MIT
